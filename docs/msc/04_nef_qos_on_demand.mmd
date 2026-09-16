@@ -1,0 +1,21 @@
+%% MSC 4 (optional) — PDU Session Modification via NEF when a crane enters remote-control mode (TS 23.502 §4.3.3, §4.15.6.6 AF session with QoS)
+sequenceDiagram
+    autonumber
+    participant TOS as Terminal OS / MEC app (AF)
+    participant NEF
+    participant PCF
+    participant SMF
+    participant UPF
+    participant AMF
+    participant gNB
+    participant UE as Crane CPE
+    TOS->>NEF: Nnef_AFsessionWithQoS_Create (UE IP, flow descr., requested QoS ref = "crane_video_remote", 40 Mbit/s UL)
+    NEF->>PCF: Npcf_PolicyAuthorization_Create (mapped to 5QI 130 custom, ARP 4)
+    PCF->>SMF: Npcf_SMPolicyControl_UpdateNotify (new PCC rule)
+    SMF->>UPF: PFCP Session Modification (new PDR/QER for QFI 130)
+    SMF->>AMF: N1N2MessageTransfer (N2: QoS Flow Modify [QFI 130, GBR 40 Mbit/s]; N1: PDU Session Modification Command)
+    AMF->>gNB: NGAP PDU Session Resource Modify Request
+    gNB->>UE: RRC Reconfiguration (new DRB / QoS flow mapping)
+    UE-->>gNB: Complete
+    gNB-->>AMF: Modify Response (admitted / not admitted → ARP pre-emption may occur here)
+    NEF-->>TOS: 201 Created (QoS applied) — or 4xx if not admitted

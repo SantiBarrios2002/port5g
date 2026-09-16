@@ -1,0 +1,26 @@
+%% MSC 3 — Xn-based inter-gNB handover of a shuttle carrier mid-yard (TS 23.502 §4.9.1.2, TS 38.300 §9.2.3.2)
+sequenceDiagram
+    autonumber
+    participant UE as Shuttle CPE
+    participant S as Source gNB (MAST-A2)
+    participant T as Target gNB (MAST-B2)
+    participant AMF
+    participant SMF
+    participant UPF as Local UPF
+    UE->>S: Measurement Report (A3: neighbour RSRP > serving + offset)
+    S->>T: Xn Handover Request (UE context, PDU sessions, QoS flows incl. 5QI 84 GBR, PDCP SN status)
+    T-->>S: Xn Handover Request Acknowledge (target cell config in RRC container)
+    S->>UE: RRC Reconfiguration (handover command)
+    Note over S,T: Data forwarding on Xn-U: source forwards buffered UL/DL PDCP SDUs + SN Status Transfer (next expected UL SN, DL COUNT).
+    S->>T: SN Status Transfer
+    S->>T: Xn-U forwarded packets
+    UE->>T: Random access + RRC Reconfiguration Complete
+    Note over UE,T: Interruption ≈ RRC processing + RACH + reconfig ≈ [FILL from TS 38.133 / measured]; must be < S2 PDB 30 ms budget slack. DAPS HO (TS 38.300 §9.2.3.2.1) reduces it to ~0 ms.
+    T->>AMF: NGAP Path Switch Request (PDU sessions to switch, target N3 F-TEID)
+    AMF->>SMF: Nsmf_PDUSession_UpdateSMContext
+    SMF->>UPF: PFCP Session Modification (DL FAR → target gNB F-TEID)
+    UPF-->>SMF: PFCP Session Modification Response
+    UPF->>T: End marker on old tunnel (via source, forwarded)
+    SMF-->>AMF: response
+    AMF-->>T: NGAP Path Switch Request Acknowledge
+    T->>S: Xn UE Context Release

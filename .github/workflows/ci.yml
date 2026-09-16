@@ -1,0 +1,19 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -e ".[dev]"
+      - run: make test
+      - run: make figures
+      - name: Determinism check (figures byte-identical across two runs)
+        run: |
+          sha256sum figures/*.png > /tmp/run1.txt
+          make figures >/dev/null
+          sha256sum figures/*.png > /tmp/run2.txt
+          diff /tmp/run1.txt /tmp/run2.txt
+      - run: make assumptions

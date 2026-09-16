@@ -1,0 +1,202 @@
+# ues.yaml — UE classes: Tx power, antenna, noise figure, losses, mobility.
+
+classes:
+  handheld:
+    description: "Workforce handheld / PTT terminal (S3)"
+    tx_power_dbm:
+      value: 23
+      unit: dBm
+      source: "3GPP TS 38.101-1 Table 6.2.1-1: UE power class 3 = 23 dBm (tolerance +2/-3 dB not applied)"
+      confidence: secondary
+    antenna_gain_dbi:
+      value: 0
+      unit: dBi
+      source: "[UNVERIFIED] Conventional 0 dBi for an integrated handheld antenna; cite a planning guideline or datasheet."
+      confidence: unverified
+    body_loss_db:
+      value: 3
+      unit: dB
+      source: "[UNVERIFIED] Commonly used body/hand loss in cellular link budgets; find a citation (e.g. ETSI TR 103 xxx or vendor RF planning guide) or drop."
+      confidence: unverified
+    noise_figure_db:
+      value: 7
+      unit: dB
+      source: "ITU-R M.2412-0 (IMT-2020 evaluation guidelines), Table 8-4 evaluation configuration: UE noise figure 7 dB for the 4 GHz test environment"
+      confidence: secondary
+    height_m:
+      value: 1.5
+      unit: m
+      source: "3GPP TR 38.901 Table 7.4.1-1 default UT height h_UT = 1.5 m"
+      confidence: secondary
+    speed_kmh:
+      value: 3
+      unit: km/h
+      source: "3GPP TR 38.901 / ITU-R M.2412 pedestrian UE speed"
+      confidence: secondary
+    n_rx_antennas:
+      value: 2
+      unit: ""
+      source: "Design: 2Rx typical handheld"
+      confidence: design
+
+  crane_cpe:
+    description: "Roof-mounted CPE on STS crane trolley/boom with external antenna (S1)"
+    tx_power_dbm:
+      value: 26
+      unit: dBm
+      source: "3GPP TS 38.101-1 Table 6.2.1-1: UE power class 2 = 26 dBm; PC2 is defined for n77/n78 (verify the band-specific table)"
+      confidence: secondary
+    antenna_gain_dbi:
+      value: 5
+      unit: dBi
+      source: "[UNVERIFIED] Placeholder. Brief §4.2 requires a value from a real industrial CPE/antenna datasheet (e.g. an outdoor n77/n78 CPE with external omni). Replace and cite."
+      confidence: unverified
+    body_loss_db:
+      value: 0
+      unit: dB
+      source: "No body loss for a fixed mounted CPE (definitional)"
+      confidence: verified
+    cable_loss_db:
+      value: 1.0
+      unit: dB
+      source: "[UNVERIFIED] Placeholder for antenna jumper loss; compute from cable datasheet (dB/m x length)."
+      confidence: unverified
+    noise_figure_db:
+      value: 7
+      unit: dB
+      source: "ITU-R M.2412-0 Table 8-4 UE noise figure (used for DL budget only)"
+      confidence: secondary
+    height_m:
+      value: 20
+      unit: m
+      source: "[UNVERIFIED] Assumed CPE mounting height on the STS crane portal/trolley. Must be taken from BEST crane drawings or a super-post-Panamax crane datasheet."
+      confidence: unverified
+    speed_kmh:
+      value: 0
+      unit: km/h
+      source: "Crane gantry travel is slow (< 1 m/s); treated as quasi-static for Doppler"
+      confidence: design
+    n_rx_antennas:
+      value: 2
+      unit: ""
+      source: "Design: 2Rx CPE"
+      confidence: design
+
+  vehicle_cpe:
+    description: "Roof-mounted CPE on autonomous shuttle carrier (S2)"
+    tx_power_dbm:
+      value: 26
+      unit: dBm
+      source: "3GPP TS 38.101-1 Table 6.2.1-1: UE power class 2"
+      confidence: secondary
+    antenna_gain_dbi:
+      value: 5
+      unit: dBi
+      source: "[UNVERIFIED] Same placeholder as crane_cpe; cite a vehicle CPE/antenna datasheet."
+      confidence: unverified
+    body_loss_db:
+      value: 0
+      unit: dB
+      source: "Roof-mounted external antenna: no vehicle penetration loss applied (definitional)"
+      confidence: verified
+    cable_loss_db:
+      value: 1.0
+      unit: dB
+      source: "[UNVERIFIED] Placeholder jumper loss."
+      confidence: unverified
+    noise_figure_db:
+      value: 7
+      unit: dB
+      source: "ITU-R M.2412-0 Table 8-4"
+      confidence: secondary
+    height_m:
+      value: 4.5
+      unit: m
+      source: "[UNVERIFIED] Approximate roof height of a shuttle/straddle carrier carrying one container; take from manufacturer drawings (e.g. Kalmar/Konecranes shuttle carrier datasheet)."
+      confidence: unverified
+    speed_kmh:
+      value: 30
+      unit: km/h
+      source: "Brief §1.2 (S2 mobility ~25-30 km/h); confirm with terminal operating limits"
+      confidence: secondary
+    n_rx_antennas:
+      value: 2
+      unit: ""
+      source: "Design: 2Rx CPE"
+      confidence: design
+
+  reefer_iot:
+    description: "Reefer plug / asset tag (RedCap or NB-IoT class device, S3)"
+    tx_power_dbm:
+      value: 23
+      unit: dBm
+      source: "3GPP TS 38.101-1 Table 6.2.1-1 power class 3 (RedCap UEs are PC3 unless otherwise stated, TS 38.306 RedCap capability)"
+      confidence: secondary
+    antenna_gain_dbi:
+      value: 0
+      unit: dBi
+      source: "[UNVERIFIED] Integrated antenna assumption."
+      confidence: unverified
+    body_loss_db:
+      value: 0
+      unit: dB
+      source: "Fixed device, no body loss (definitional)"
+      confidence: verified
+    noise_figure_db:
+      value: 7
+      unit: dB
+      source: "ITU-R M.2412-0 Table 8-4"
+      confidence: secondary
+    height_m:
+      value: 2.0
+      unit: m
+      source: "[UNVERIFIED] Reefer plug pedestal height in the reefer rack; take from BEST reefer rack layout."
+      confidence: unverified
+    speed_kmh:
+      value: 0
+      unit: km/h
+      source: "Fixed"
+      confidence: verified
+    n_rx_antennas:
+      value: 1
+      unit: ""
+      source: "Design: RedCap 1Rx option (TS 38.306 §4.2.x RedCap 1Rx/2Rx)"
+      confidence: secondary
+
+gnb:
+  antenna_gain_dbi:
+    value: 8
+    unit: dBi
+    source: "ITU-R M.2412-0 Table 8-4: BS antenna element gain 8 dBi (Dense Urban / Urban Macro 4 GHz configurations). Array/beamforming gain is accounted for separately (beamforming_gain_db). Replace with product datasheet."
+    confidence: secondary
+  beamforming_gain_db:
+    value: 6
+    unit: dB
+    source: "[UNVERIFIED] Placeholder UL Rx beamforming gain for a 4T4R panel; derive from the array factor of the chosen product or set to 0 for a conservative budget."
+    confidence: unverified
+  noise_figure_db:
+    value: 5
+    unit: dB
+    source: "ITU-R M.2412-0 Table 8-4: BS noise figure 5 dB (4 GHz). Brief §4.2 suggests 2-3 dB from vendor data; if a vendor datasheet is cited, replace here."
+    confidence: secondary
+  cable_loss_db:
+    value: 0.5
+    unit: dB
+    source: "[UNVERIFIED] Placeholder jumper loss for an integrated radio (AAU-style). Set to 0 if radio and antenna are integrated."
+    confidence: unverified
+  height_m_by_mount:
+    lighting_mast:
+      value: 30
+      unit: m
+      source: "[UNVERIFIED] Typical container-yard high-mast lighting height; take from BEST lighting layout / Port de Barcelona open data."
+      confidence: unverified
+    sts_crane:
+      value: 47
+      unit: m
+      source: "Brief §4.1 mentions '47 m crane structures'; verify against BEST STS crane datasheet (e.g. ZPMC super-post-Panamax)."
+      confidence: secondary
+    building:
+      value: 15
+      unit: m
+      source: "[UNVERIFIED] Gate/admin building roof height placeholder."
+      confidence: unverified

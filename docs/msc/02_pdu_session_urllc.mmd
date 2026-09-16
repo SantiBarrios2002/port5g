@@ -1,0 +1,26 @@
+%% MSC 2 — PDU Session Establishment on the URLLC slice with local UPF selection and PCF QoS rules (TS 23.502 §4.3.2.2.1)
+sequenceDiagram
+    autonumber
+    participant UE as Crane CPE
+    participant gNB
+    participant AMF
+    participant SMF
+    participant PCF
+    participant UPF as Local UPF (on-site)
+    UE->>AMF: NAS UL NAS Transport [PDU Session Establishment Request]<br/>(PDU session ID, S-NSSAI SST2/SD000001, DNN control.port5g)
+    AMF->>SMF: Nsmf_PDUSession_CreateSMContext (SUPI, S-NSSAI, DNN, PDU session ID)
+    Note over AMF,SMF: AMF selects SMF via NRF filtered by S-NSSAI + DNN.
+    SMF->>PCF: Npcf_SMPolicyControl_Create (SUPI, S-NSSAI, DNN)
+    PCF-->>SMF: PCC rules: flow S1_control → 5QI 82, ARP {PL 1, MAY_PREEMPT, NOT_PREEMPTABLE}, GFBR/MFBR 0.2/0.5 Mbit/s
+    Note over SMF,UPF: SMF selects the on-site UPF (DNAI = terminal MEC; latency proof: remote UPF fails the 10 ms PDB).
+    SMF->>UPF: PFCP Session Establishment Request (PDR/FAR/QER: QFI=82 mapping, GBR enforcement, N3 tunnel)
+    UPF-->>SMF: PFCP Session Establishment Response (UPF F-TEID)
+    SMF->>AMF: Namf_Communication_N1N2MessageTransfer<br/>(N2 SM info: QoS Flow Setup List [QFI, 5QI, ARP, GBR]; N1: PDU Session Establishment Accept)
+    AMF->>gNB: NGAP PDU Session Resource Setup Request (N2 SM info, NAS PDU)
+    gNB->>UE: RRC Reconfiguration (DRB for QFI 82, SDAP mapping, configured grant for URLLC)
+    UE-->>gNB: RRC Reconfiguration Complete
+    gNB-->>AMF: NGAP PDU Session Resource Setup Response (gNB N3 F-TEID)
+    AMF->>SMF: Nsmf_PDUSession_UpdateSMContext (N2 info)
+    SMF->>UPF: PFCP Session Modification (DL FAR → gNB F-TEID)
+    UPF-->>SMF: PFCP Session Modification Response
+    Note over UE,UPF: User plane active: UE ⇄ gNB ⇄ UPF ⇄ MEC crane-control app. Capture NGAP + PFCP for figure 10.

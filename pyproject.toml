@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "port5g"
+version = "0.1.0"
+description = "Private 5G network design study for the BEST container terminal (Port of Barcelona) — 5GMCS course project"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pyyaml>=6.0",
+    "matplotlib>=3.7",
+    "shapely>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-cov", "ruff"]
+ilp = ["pulp>=2.7"]
+
+[project.scripts]
+port5g = "port5g.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::port5g.channel.ModelValidityWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

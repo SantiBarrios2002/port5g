@@ -1,0 +1,15 @@
+req_id,service,requirement,spec_clause,design_mechanism,module,figure,status
+R1.1,S1,UL 20-60 Mbit/s per crane aggregate video,"Brief §1.2; TS 22.104 Table 5.2-1 (remote control class)",Vision slice (SST 1) GBR custom 5QI 130; UL-heavy TDD pattern; capacity-driven site count,capacity.py / slicing.py,fig07,OPEN — does not close with coverage-driven sites
+R1.2,S1,Control loop 50-100 Hz small packets one-way <= 10 ms,"TS 23.501 Table 5.7.4-1 5QI 82 (PDB 10 ms, PER 1e-4); TS 22.104",URLLC slice (SST 2) 5QI 82 ARP 1; configured grant; mini-slot; local UPF,latency.py,fig05,MET (4.46 ms worst-case with 1 retx)
+R1.3,S1,Reliability 99.999 % within PDB,"TS 22.104 (communication service availability); brief §4.4",Conservative MCS (1e-5 first tx) or PDCP duplication; HARQ alone insufficient,reliability.py,fig06,MET only with MCS back-off or duplication — trade-off reported
+R1.4,S1,99.9 % area availability in quay zone,Brief §4.2,Jakes area-coverage margin (~21 dB at sigma 7.82),reliability.py / linkbudget.py,fig03 fig09,MET at 4 sites (coverage) — dominant sensitivity
+R2.1,S2,UL 4-6 camera streams + telemetry per vehicle at 25-30 km/h,"Brief §1.2; TS 22.186",Vision slice 5QI 84 (PDB 30 ms) ARP 6 preemptable; Xn handover < interruption budget,capacity.py / docs/msc/03_xn_handover.mmd,fig07 fig02,OPEN — UL capacity
+R2.2,S2,Sub-metre positioning,TS 22.261 Table 7.3.2.2-1 (level to select),NR positioning (Rel-16 PRS/SRS) or GNSS-RTK over the network — not modelled,—,—,NOT MODELLED (state in report)
+R2.3,S2,Mobility: handover interruption acceptable for 30 ms PDB,TS 23.502 §4.9.1; TS 38.300 §9.2.3,Xn handover with data forwarding; DAPS handover as option,docs/msc/03_xn_handover.mmd,MSC 3,DESIGNED — interruption figure to be sourced
+R3.1,S3,~4,400 devices periodic small reports,"TS 22.261 Table 7.1-1 (1e6 /km2)",MIoT slice (SST 3) 5QI 9 non-GBR ARP 9-12 preemptable; RedCap UEs,slicing.py / admission.py,fig08,MET (density trivially below spec)
+R3.2,S3,Must not starve S1/S2,Brief §1.2,Slice max share 35 %; ARP vulnerability; min share 5 % so IoT is not fully starved,admission.py,fig08,MET (control 0 blocked; telemetry pre-empted first)
+R3.3,S3,Handheld roaming to public network at gate,TS 23.501 §5.30 (SNPN/PNI-NPN),SNPN with PNI-NPN/public fallback for handhelds,docs/architecture.md,—,DESIGNED
+R4.1,All,Spectrum legally available under self-provision,CNAF nota UN [UNVERIFIED],3.8-3.92 GHz local broadband baseline; 26 GHz overlay option,band.yaml,—,UNVERIFIED — CNMC 2023 report conflicts with brief
+R4.2,All,TDD coexistence with adjacent MNO n78,TS 38.104 §6.6 (ACLR/ACS); TS 38.213 §11.1,Synchronised DDDSU vs unsynchronised DSUUU + guard band analysis,sinr.py (cross_link note),fig02 fig07,OPEN — Phase 2 headline slide
+R5.1,Core,Three S-NSSAIs with isolation,TS 23.501 §5.15,SST 2/1/3 with SD 000001-3; per-slice DNN and UPF,testbed/open5gs,fig10,TESTBED
+R5.2,Core,Local UPF mandatory,Brief §3.2,Latency proof: remote UPF 12.5 ms > 10 ms PDB,latency.local_upf_proof,fig05,MET (proof by number)

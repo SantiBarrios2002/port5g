@@ -1,0 +1,124 @@
+# latency.yaml — S1 one-way latency budget terms (brief §4.4). Every term individually sourced.
+
+terms:
+  ue_app_processing_ms:
+    value: 0.5
+    unit: ms
+    source: "[UNVERIFIED] Application-layer packetisation on the crane CPE/PLC; measure on the testbed or cite a vendor figure."
+    confidence: unverified
+  ue_pusch_preparation_symbols:
+    cap1: {value: 12, unit: symbols, source: "3GPP TS 38.214 Table 6.4-1: PUSCH preparation time N2 for mu=1, UE processing capability 1 = 12 symbols", confidence: secondary}
+    cap2: {value: 5.5, unit: symbols, source: "3GPP TS 38.214 Table 6.4-2: N2 for mu=1, capability 2 = 5.5 symbols", confidence: secondary}
+  ue_pdsch_decoding_symbols:
+    cap1: {value: 10, unit: symbols, source: "3GPP TS 38.214 Table 5.3-1: PDSCH decoding time N1 for mu=1, capability 1 (dmrs-AdditionalPosition=pos0) = 10 symbols", confidence: secondary}
+    cap2: {value: 4.5, unit: symbols, source: "3GPP TS 38.214 Table 5.3-2: N1 for mu=1, capability 2 = 4.5 symbols", confidence: secondary}
+  scheduling_request_ms:
+    sr_periodicity_slots: {value: 1, unit: slots, source: "Design: SR configured every slot (TS 38.331 SchedulingRequestResourceConfig periodicityAndOffset allows sym2 .. sl640)", confidence: secondary}
+    grant_pipeline_ms: {value: 1.0, unit: ms, source: "[UNVERIFIED] SR -> gNB scheduler -> DCI 0_1 grant, incl. gNB processing; vendor-dependent. Zero if configured grant (TS 38.214 §6.1.2.3)", confidence: unverified}
+  gnb_processing_ms:
+    value: 0.5
+    unit: ms
+    source: "[UNVERIFIED] gNB L1/L2 UL decode + forward; not standardised. TR 38.824 evaluation assumptions use gNB processing comparable to UE capability 2; cite or measure."
+    confidence: unverified
+  fronthaul_fibre_km:
+    value: 2.0
+    unit: km
+    source: "Design: worst-case fibre run across the 1.5 km terminal to the on-site CU/UPF room"
+    confidence: design
+  fibre_propagation_us_per_km:
+    value: 4.9
+    unit: us/km
+    source: "Physics: c/n with n = 1.468 (SMF-28 group index at 1550 nm) -> 4.90 us/km; brief §4.4 quotes ~5 us/km"
+    confidence: verified
+  switch_hops:
+    value: 3
+    unit: hops
+    source: "Design: DU -> aggregation switch -> CU/UPF"
+    confidence: design
+  switch_hop_latency_us:
+    value: 10
+    unit: us
+    source: "[UNVERIFIED] Cut-through industrial Ethernet switch latency order of magnitude; cite datasheet."
+    confidence: unverified
+  upf_forwarding_ms:
+    value: 0.1
+    unit: ms
+    source: "[UNVERIFIED] Local UPF forwarding; measurable on the Open5GS testbed (N3->N6)."
+    confidence: unverified
+  mec_app_processing_ms:
+    value: 1.0
+    unit: ms
+    source: "[UNVERIFIED] Crane-control application loop processing at the MEC."
+    confidence: unverified
+  remote_upf_extra_rtt_ms:
+    value: 8.0
+    unit: ms
+    source: "[UNVERIFIED] One-way extra transport latency if the UPF were in an MNO regional data centre (used to PROVE the local-UPF requirement, brief §3.2)."
+    confidence: unverified
+  harq_feedback_k1_slots:
+    value: 1
+    unit: slots
+    source: "Design: minimum PDSCH-to-HARQ-ACK timing K1 = 1 (TS 38.213 §9.2.3 dl-DataToUL-ACK); for UL the retransmission is scheduled by a new grant (no explicit ACK), same pipeline assumed"
+    confidence: secondary
+
+# Named configurations for figure 5 (brief §7.5 requires >= 4).
+configurations:
+  - {name: "SR-based, mu=1, full slot, 0 retx", grant: "SR", mu: 1, symbols: 14, harq_retx: 0, ue_cap: 1}
+  - {name: "Configured grant, mu=1, full slot, 0 retx", grant: "CG", mu: 1, symbols: 14, harq_retx: 0, ue_cap: 1}
+  - {name: "Configured grant, mu=1, mini-slot 4 sym, 0 retx", grant: "CG", mu: 1, symbols: 4, harq_retx: 0, ue_cap: 2}
+  - {name: "Configured grant, mu=1, mini-slot 4 sym, 1 retx", grant: "CG", mu: 1, symbols: 4, harq_retx: 1, ue_cap: 2}
+  - {name: "Configured grant, mu=1, mini-slot 4 sym, 2 retx", grant: "CG", mu: 1, symbols: 4, harq_retx: 2, ue_cap: 2}
+  - {name: "Configured grant, mu=2, mini-slot 4 sym, 1 retx", grant: "CG", mu: 2, symbols: 4, harq_retx: 1, ue_cap: 2}
+
+# Link-level abstraction shared by latency.py / reliability.py / linkbudget.py
+link_level:
+  first_tx_bler_urllc:
+    value: 1.0e-5
+    unit: ""
+    source: "Brief §4.2: operating BLER 1e-5 at first transmission for the URLLC service"
+    confidence: design
+  first_tx_bler_embb:
+    value: 0.1
+    unit: ""
+    source: "TS 38.214 §5.2.2.1: CQI tables are defined for a target transport-block error probability of 0.1"
+    confidence: secondary
+  harq_bler_per_retx:
+    value: 0.1
+    unit: ""
+    source: "Design: BLER per HARQ (re)transmission when the first-transmission MCS targets 10% (used in the HARQ-vs-duplication comparison); independent-error assumption stated in the report"
+    confidence: design
+  control_payload_bits:
+    value: 2040
+    unit: bits
+    source: "255 B x 8 (5QI 82 MDBV, TS 23.501 Table 5.7.4-1)"
+    confidence: secondary
+  finite_blocklength_n:
+    value: 500
+    unit: channel uses
+    source: "Design: blocklength for the normal-approximation SNR penalty (≈ 4 symbols x 12 subcarriers x ~10 PRB). Formula: Polyanskiy, Poor & Verdú, 'Channel coding rate in the finite blocklength regime', IEEE Trans. IT, 2010"
+    confidence: design
+  implementation_loss_db:
+    value: 2.0
+    unit: dB
+    source: "[UNVERIFIED] Gap between Shannon/normal-approx and practical LDPC at the target BLER; cite a link-level study (e.g. 3GPP R1 contribution or TR 38.824 Annex) or calibrate."
+    confidence: unverified
+  attenuated_shannon_alpha:
+    value: 0.6
+    unit: ""
+    source: "3GPP TR 36.942 Annex A.2 link-level to system-level mapping: throughput = alpha * S(SINR), alpha = 0.6 (implementation losses)"
+    confidence: secondary
+  max_spectral_efficiency_ul:
+    value: 5.5547
+    unit: bit/s/Hz
+    source: "TS 38.214 Table 5.2.2.1-3 (CQI table 2, 256QAM) top entry efficiency 7.4063 for DL; UL 64QAM cap uses Table 5.2.2.1-2 top entry 5.5547 bit/s/Hz"
+    confidence: secondary
+  max_spectral_efficiency_dl:
+    value: 7.4063
+    unit: bit/s/Hz
+    source: "TS 38.214 Table 5.2.2.1-3 top entry (CQI 15, 256QAM)"
+    confidence: secondary
+  interference_margin_db:
+    value: 3.0
+    unit: dB
+    source: "[UNVERIFIED] Interference-over-thermal margin for the link budget; Phase 2 replaces it with the per-zone value from sinr.py. 3 dB (IoT = 50%) is a common planning starting point."
+    confidence: unverified

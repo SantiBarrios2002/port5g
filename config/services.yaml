@@ -1,0 +1,172 @@
+# services.yaml — S1/S2/S3 traffic models and offered load.
+# Offered load is COMPUTED by scenario.py from these primitives; never hard-code an aggregate.
+
+S1_crane_control:
+  description: "Remote STS crane control: UL camera feeds + DL control commands"
+  n_devices:
+    value: 11
+    unit: cranes
+    source: "Brief §1.1: 11 super post-Panamax STS cranes at BEST (verify: Hutchison Ports BEST terminal facts page)"
+    confidence: secondary
+  cameras_per_crane:
+    value: 7
+    unit: cameras
+    source: "Brief §1.2 gives 6-8 camera feeds per crane; midpoint chosen (design). Verify against a remote-crane-operation vendor reference (e.g. 5G-ACIA / Port of Hamburg remote crane trials)."
+    confidence: design
+  ul_video_rate_per_crane_mbps:
+    value: 40
+    unit: Mbit/s
+    source: "Brief §1.2 range 20-60 Mbit/s aggregate UL per crane; midpoint chosen (design). Sensitivity analysis sweeps 20-60."
+    confidence: design
+  ul_video_rate_range_mbps:
+    value: [20, 60]
+    unit: Mbit/s
+    source: "Brief §1.2"
+    confidence: secondary
+  control_loop_rate_hz:
+    value: 100
+    unit: Hz
+    source: "Brief §1.2: 50-100 Hz control loop; upper bound chosen for the latency budget (design)."
+    confidence: design
+  control_packet_bytes:
+    value: 255
+    unit: B
+    source: "Matched to the MDBV of 5QI 82 (TS 23.501 Table 5.7.4-1) so a command fits in one burst"
+    confidence: secondary
+  activity_factor:
+    value: 1.0
+    unit: ""
+    source: "Design: all cranes assumed simultaneously in remote mode (worst case, busy-hour)"
+    confidence: design
+  ue_class: crane_cpe
+  zone: quay_apron
+  one_way_latency_target_ms:
+    value: 10
+    unit: ms
+    source: "TS 22.104 Table 5.2-1 'Remote control' / 'Mobile robots' class figures range from 1 ms to 50 ms; brief §3.4 maps crane control to 5QI 82/83 (PDB 10 ms). Exact TS 22.104 row still to be selected and quoted — see qos.yaml."
+    confidence: secondary
+  reliability_target:
+    value: 0.99999
+    unit: ""
+    source: "Brief §4.4: 99.999% within the PDB (TS 22.104 uses 'communication service availability' 99.999% for several motion-control rows)"
+    confidence: secondary
+  area_availability_target:
+    value: 0.999
+    unit: ""
+    source: "Brief §4.2: 99.9% area availability for the control slice"
+    confidence: design
+
+S2_shuttle_carriers:
+  description: "Autonomous shuttle carriers: UL obstacle-detection video + telemetry, DL mission commands"
+  n_devices:
+    value: 30
+    unit: vehicles
+    source: "Brief §1.1 (~30 shuttle carriers)"
+    confidence: secondary
+  cameras_per_vehicle:
+    value: 5
+    unit: cameras
+    source: "Brief §1.2: 4-6 cameras; midpoint (design)"
+    confidence: design
+  ul_rate_per_camera_mbps:
+    value: 4
+    unit: Mbit/s
+    source: "[UNVERIFIED] Assumed 1080p30 H.264/H.265 perception stream. Cite an industrial camera or encoder datasheet."
+    confidence: unverified
+  telemetry_rate_mbps:
+    value: 0.5
+    unit: Mbit/s
+    source: "[UNVERIFIED] Placeholder for CAN/GNSS/lidar summary telemetry."
+    confidence: unverified
+  activity_factor:
+    value: 0.7
+    unit: ""
+    source: "[UNVERIFIED] Fraction of the fleet simultaneously moving in the busy hour; take from BEST operational data or TOS simulation."
+    confidence: unverified
+  ue_class: vehicle_cpe
+  zone: asc_blocks
+  one_way_latency_target_ms:
+    value: 30
+    unit: ms
+    source: "5QI 84 PDB 30 ms (intelligent transport systems), TS 23.501 Table 5.7.4-1; TS 22.186 gives 10-100 ms for various V2X use cases"
+    confidence: secondary
+  reliability_target:
+    value: 0.9999
+    unit: ""
+    source: "[UNVERIFIED] Chosen from TS 22.186 automated-driving rows (99.99% for several); exact row to be quoted."
+    confidence: unverified
+  area_availability_target:
+    value: 0.99
+    unit: ""
+    source: "Design"
+    confidence: design
+  positioning_accuracy_m:
+    value: 1.0
+    unit: m
+    source: "Brief §1.2 'sub-metre'; TS 22.261 Table 7.3.2.2-1 positioning service levels (level to be selected)"
+    confidence: secondary
+
+S3_monitoring:
+  description: "Reefer/asset telemetry, gate OCR bursts, handhelds"
+  reefer_plugs:
+    value: 1350
+    unit: devices
+    source: "Brief §1.1"
+    confidence: secondary
+  asset_tags:
+    value: 2000
+    unit: devices
+    source: "Brief §1.2"
+    confidence: secondary
+  handhelds:
+    value: 200
+    unit: devices
+    source: "Brief §1.2"
+    confidence: secondary
+  reefer_report_bytes:
+    value: 200
+    unit: B
+    source: "[UNVERIFIED] Assumed payload (temp, humidity, power, IDs, headers)."
+    confidence: unverified
+  reefer_report_period_s:
+    value: 600
+    unit: s
+    source: "Brief §1.2: every 5-15 min; 10 min chosen (design)"
+    confidence: design
+  gate_ocr_burst_mb:
+    value: 5
+    unit: MB
+    source: "[UNVERIFIED] Assumed per-truck OCR image set."
+    confidence: unverified
+  gate_trucks_per_hour:
+    value: 200
+    unit: trucks/h
+    source: "[UNVERIFIED] Busy-hour gate throughput; take from BEST/Port de Barcelona statistics."
+    confidence: unverified
+  handheld_rate_mbps:
+    value: 0.1
+    unit: Mbit/s
+    source: "[UNVERIFIED] PTT voice + app traffic average."
+    confidence: unverified
+  ue_class: reefer_iot
+  zone: gate_rail
+  one_way_latency_target_ms:
+    value: 300
+    unit: ms
+    source: "5QI 9 default bearer PDB 300 ms, TS 23.501 Table 5.7.4-1"
+    confidence: secondary
+  reliability_target:
+    value: 0.99
+    unit: ""
+    source: "Design (best effort)"
+    confidence: design
+  area_availability_target:
+    value: 0.95
+    unit: ""
+    source: "Brief §4.2 (95%)"
+    confidence: design
+  connection_density_target_per_km2:
+    value: 1000000
+    unit: devices/km2
+    source: "TS 22.261 Table 7.1-1 (mIoT connection density 1,000,000 /km2) — far above the ~4,400 devices / 0.8 km2 here; recorded to show the requirement is trivially met"
+    confidence: secondary

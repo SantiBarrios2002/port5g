@@ -1,0 +1,30 @@
+%% MSC 1 — Registration + slice selection for a shuttle carrier in the SNPN (TS 23.502 §4.2.2.2, TS 23.501 §5.15, §5.30.2)
+sequenceDiagram
+    autonumber
+    participant UE as Shuttle CPE
+    participant gNB as gNB (DU/CU)
+    participant AMF
+    participant AUSF
+    participant UDM as UDM/UDR
+    participant NSSF
+    UE->>gNB: RRC Setup Request (est. cause mo-Data)
+    gNB-->>UE: RRC Setup
+    Note over UE,gNB: SIB1 broadcasts PLMN ID + NID (SNPN identity). UE selects SNPN in manual/automatic mode.
+    UE->>gNB: RRC Setup Complete + NAS Registration Request<br/>(SUCI, Requested NSSAI = {SST 1/SD 000002, SST 2/SD 000001})
+    gNB->>AMF: NGAP Initial UE Message (NID in Selected PLMN Identity, Requested NSSAI)
+    AMF->>AUSF: Nausf_UEAuthentication_Authenticate (SUCI, SNPN serving network name = "5G:<PLMN>:<NID>")
+    AUSF->>UDM: Nudm_UEAuthentication_Get
+    UDM-->>AUSF: 5G-AKA AV
+    AUSF-->>AMF: 5G-AKA challenge
+    AMF->>UE: NAS Authentication Request
+    UE-->>AMF: NAS Authentication Response
+    AMF->>UE: NAS Security Mode Command / Complete
+    AMF->>UDM: Nudm_SDM_Get (Subscribed S-NSSAIs, slice-specific DNNs)
+    UDM-->>AMF: Subscribed NSSAI = {SST1/000002, SST2/000001}
+    AMF->>NSSF: Nnssf_NSSelection_Get (Requested NSSAI, Subscribed NSSAI, TAI)
+    NSSF-->>AMF: Allowed NSSAI = {SST1/000002, SST2/000001}, target AMF set, NRF for slice
+    AMF->>gNB: NGAP Initial Context Setup Request (Allowed NSSAI, UE security ctx, UE-AMBR)
+    gNB->>UE: RRC Security Mode + Reconfiguration
+    AMF->>UE: NAS Registration Accept (5G-GUTI, Allowed NSSAI, TAI list)
+    UE-->>AMF: NAS Registration Complete
+    Note over UE,NSSF: A reefer device registers with Requested NSSAI {SST3/000003} only → Allowed NSSAI differs by UE class (testbed demo step 1).

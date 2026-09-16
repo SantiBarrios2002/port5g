@@ -1,0 +1,143 @@
+# scenario_best.yaml — site geometry references, zones, candidate mounts, UE populations, seeds.
+
+site:
+  name: "Hutchison Ports BEST — Barcelona Europe South Terminal, Moll Prat"
+  geojson: "data/site/best_terminal.geojson"
+  geojson_is_placeholder:
+    value: true
+    unit: ""
+    source: "[UNVERIFIED] The shipped GeoJSON is a SCHEMATIC PLACEHOLDER built from the brief's dimensions (1,500 m quay, ~80 ha) so the pipeline runs end-to-end. Brief §1.1 requires the real polygon digitised from opendata.portdebarcelona.cat — see scripts/DIGITISE_SITE.md. Set to false once replaced."
+    confidence: unverified
+  yard_area_ha:
+    value: 80
+    unit: ha
+    source: "Brief §1.1: ~80 ha (some sources ~100 ha, phase-dependent). Verify: Hutchison Ports BEST / Port de Barcelona; state the range in the report."
+    confidence: secondary
+  quay_length_m:
+    value: 1500
+    unit: m
+    source: "Brief §1.1 (five deep-sea berths)"
+    confidence: secondary
+  n_sts_cranes:
+    value: 11
+    unit: ""
+    source: "Brief §1.1"
+    confidence: secondary
+  n_asc:
+    value: 51
+    unit: ""
+    source: "Brief §1.1: ~48-54 rail-mounted ASCs; midpoint"
+    confidence: secondary
+  n_reefer_plugs:
+    value: 1350
+    unit: ""
+    source: "Brief §1.1"
+    confidence: secondary
+  rail_tracks:
+    value: 8
+    unit: ""
+    source: "Brief §1.1"
+    confidence: secondary
+
+# Physical clutter parameters mapped onto TR 38.901 InF LOS-probability parameters (Table 7.2-4):
+# d_clutter (typical clutter size), r (clutter density), h_c (clutter height).
+clutter:
+  container_height_m:
+    value: 2.591
+    unit: m
+    source: "ISO 668 standard container external height 8 ft 6 in = 2,591 mm (1CC/1AA types). High-cube (9 ft 6 in = 2,896 mm) not assumed as majority."
+    confidence: secondary
+  container_length_m:
+    value: 12.192
+    unit: m
+    source: "ISO 668: 40 ft container external length 12,192 mm"
+    confidence: secondary
+  stack_height_tiers:
+    value: 5
+    unit: tiers
+    source: "Brief §4.1: stacked 4-5 high; 5 chosen (worst case for clutter height)"
+    confidence: design
+
+zones:
+  quay_apron:
+    description: "Quay + STS crane apron: open, LOS-dominant, ASC/shuttle transfer lanes"
+    channel_model: "UMi_SC"
+    los_model: "UMi"
+    depth_from_quay_m: {value: 120, unit: m, source: "[UNVERIFIED] Apron depth incl. crane rail span and transfer lanes; from port plan", confidence: unverified}
+    blockage_prob: {value: 0.05, unit: "", source: "[UNVERIFIED] Probability that a shuttle on the apron is shadowed by a crane leg/container in transit", confidence: unverified}
+    blockage_loss_db: {value: 10, unit: dB, source: "[UNVERIFIED] Simple stochastic blockage term (brief §4.1 allows a justified simple term instead of TR 38.901 Blockage Model A/B)", confidence: unverified}
+    inf_params:
+      sub_scenario: "InF-SL"
+      d_clutter_m: {value: 12.192, unit: m, source: "Container length (ISO 668) as characteristic clutter size", confidence: secondary}
+      r: {value: 0.10, unit: "", source: "[UNVERIFIED] Low clutter density on the apron (containers only in transit)", confidence: unverified}
+      h_c_m: {value: 2.591, unit: m, source: "Single container on a shuttle (ISO 668)", confidence: secondary}
+  asc_blocks:
+    description: "Automated stacking crane blocks: dense container clutter, canyon-like rows"
+    channel_model: "InF"
+    los_model: "InF"
+    depth_from_quay_m: {value: 450, unit: m, source: "[UNVERIFIED] Yard depth to end of ASC blocks; from port plan", confidence: unverified}
+    blockage_prob: {value: 0.30, unit: "", source: "[UNVERIFIED] Shuttle carriers in the transfer zones spend a significant fraction of time shadowed by stacks", confidence: unverified}
+    blockage_loss_db: {value: 15, unit: dB, source: "[UNVERIFIED] Diffraction over a 5-tier steel stack; could be replaced by TR 38.901 Blockage Model B", confidence: unverified}
+    inf_params:
+      sub_scenario: "InF-DH"
+      d_clutter_m: {value: 12.192, unit: m, source: "Container length (ISO 668)", confidence: secondary}
+      r: {value: 0.60, unit: "", source: "[UNVERIFIED] Ground-area fraction covered by stacks in an ASC block (TR 38.901 Table 7.2-4: DH requires r >= 0.4); derive from the digitised block polygons", confidence: unverified}
+      h_c_m: {value: 12.955, unit: m, source: "Computed: 5 tiers x 2.591 m (ISO 668)", confidence: secondary}
+  gate_rail:
+    description: "Truck gate, rail terminal (8 tracks), admin buildings: moderate clutter"
+    channel_model: "InF"
+    los_model: "InF"
+    depth_from_quay_m: {value: 560, unit: m, source: "[UNVERIFIED] Total terminal depth; from port plan", confidence: unverified}
+    blockage_prob: {value: 0.10, unit: "", source: "[UNVERIFIED]", confidence: unverified}
+    blockage_loss_db: {value: 10, unit: dB, source: "[UNVERIFIED]", confidence: unverified}
+    inf_params:
+      sub_scenario: "InF-SH"
+      d_clutter_m: {value: 12.192, unit: m, source: "Container length / wagon length (ISO 668)", confidence: secondary}
+      r: {value: 0.30, unit: "", source: "[UNVERIFIED] Moderate clutter (rail wagons, trucks, single-tier stacks)", confidence: unverified}
+      h_c_m: {value: 5.182, unit: m, source: "Computed: 2 tiers x 2.591 m (ISO 668)", confidence: secondary}
+
+# Candidate mounting points for gNBs (brief §4.2: crane and lighting-mast structures only).
+# Coordinates are local metres (x along quay eastwards, y inland from quay). PLACEHOLDER positions until
+# the port plan is digitised; heights come from ues.yaml gnb.height_m_by_mount.
+candidate_mounts:
+  source: "[UNVERIFIED] Schematic positions; replace with digitised crane rail + lighting-mast layout"
+  points:
+    - {id: "STS-01", type: sts_crane, x: 90,   y: 25}
+    - {id: "STS-03", type: sts_crane, x: 350,  y: 25}
+    - {id: "STS-05", type: sts_crane, x: 610,  y: 25}
+    - {id: "STS-07", type: sts_crane, x: 870,  y: 25}
+    - {id: "STS-09", type: sts_crane, x: 1130, y: 25}
+    - {id: "STS-11", type: sts_crane, x: 1390, y: 25}
+    - {id: "MAST-A1", type: lighting_mast, x: 150,  y: 200}
+    - {id: "MAST-A2", type: lighting_mast, x: 450,  y: 200}
+    - {id: "MAST-A3", type: lighting_mast, x: 750,  y: 200}
+    - {id: "MAST-A4", type: lighting_mast, x: 1050, y: 200}
+    - {id: "MAST-A5", type: lighting_mast, x: 1350, y: 200}
+    - {id: "MAST-B1", type: lighting_mast, x: 300,  y: 360}
+    - {id: "MAST-B2", type: lighting_mast, x: 600,  y: 360}
+    - {id: "MAST-B3", type: lighting_mast, x: 900,  y: 360}
+    - {id: "MAST-B4", type: lighting_mast, x: 1200, y: 360}
+    - {id: "MAST-C1", type: lighting_mast, x: 400,  y: 500}
+    - {id: "MAST-C2", type: lighting_mast, x: 800,  y: 500}
+    - {id: "MAST-C3", type: lighting_mast, x: 1200, y: 500}
+    - {id: "GATE-BLD", type: building,     x: 1450, y: 520}
+
+simulation:
+  seed:
+    value: 20260915
+    unit: ""
+    source: "Design: master RNG seed (rule §10.4 — every stochastic component derives its seed from this)"
+    confidence: design
+  grid_resolution_m:
+    value: 10
+    unit: m
+    source: "Design: SINR/coverage evaluation grid pitch"
+    confidence: design
+  admission:
+    duration_s: {value: 600, unit: s, source: "Design: 10-minute load ramp for figure 8", confidence: design}
+    dt_s: {value: 1.0, unit: s, source: "Design: time step", confidence: design}
+    ramp_factor_max: {value: 3.0, unit: "", source: "Design: offered load ramps linearly from 0 to 3x nominal to force pre-emption", confidence: design}
+    mean_holding_time_s:
+      control: {value: 300, unit: s, source: "Design: long-lived crane sessions", confidence: design}
+      vision: {value: 120, unit: s, source: "Design", confidence: design}
+      telemetry: {value: 20, unit: s, source: "Design: short IoT sessions", confidence: design}

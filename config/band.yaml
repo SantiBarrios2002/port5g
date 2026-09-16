@@ -1,0 +1,146 @@
+# band.yaml — carrier, bandwidth, numerology, TDD pattern, power limits.
+# Every leaf is {value, unit, source, confidence}. confidence ∈ {verified, secondary, unverified, design}.
+#   verified   = read directly from the primary spec/regulator text by a team member (record who/when in note)
+#   secondary  = from a reliable secondary source or from memory of the spec; MUST be re-verified before the report
+#   unverified = placeholder so the code runs; the report must show it as [UNVERIFIED]
+#   design     = a choice this project makes, justified in the report (not an external fact)
+# Changing the band (e.g. 3.9 GHz -> 26 GHz) is done HERE ONLY — no code changes (rule §10.5).
+
+carrier:
+  fc_ghz:
+    value: 3.9
+    unit: GHz
+    source: "Design choice: centre of the 3800-3920 MHz local-broadband sub-range reported for self-provision (autoprestación). Sub-range itself is NOT yet confirmed from the primary CNAF text — see spectrum.cnaf below."
+    confidence: design
+  bandwidth_mhz:
+    value: 100
+    unit: MHz
+    source: "Design choice: maximum FR1 channel bandwidth for n77/n78 per 3GPP TS 38.101-1 Table 5.3.5-1. Whether 100 MHz contiguous is obtainable under self-provision is [UNVERIFIED] (CNAF)."
+    confidence: design
+  band_label:
+    value: "n77"
+    unit: ""
+    source: "3GPP TS 38.101-1 Table 5.2-1: n77 = 3300-4200 MHz TDD; n78 = 3300-3800 MHz TDD"
+    confidence: secondary
+  duplex:
+    value: "TDD"
+    unit: ""
+    source: "3GPP TS 38.101-1 Table 5.2-1 (n77 is TDD)"
+    confidence: secondary
+
+numerology:
+  mu:
+    value: 1
+    unit: ""
+    source: "Design baseline: mu=1 -> 30 kHz SCS, 0.5 ms slot, 14 symbols/slot (3GPP TS 38.211 §4.2, Table 4.2-1; §4.3.2)"
+    confidence: secondary
+  n_prb:
+    value: 273
+    unit: PRB
+    source: "3GPP TS 38.101-1 Table 5.3.2-1: max transmission bandwidth configuration N_RB for 100 MHz at 30 kHz SCS = 273"
+    confidence: secondary
+  mu_alternative:
+    value: 2
+    unit: ""
+    source: "Comparison case per brief §2.3: 60 kHz SCS, 0.25 ms slot (TS 38.211 Table 4.2-1). N_RB for 100 MHz at 60 kHz = 135 (TS 38.101-1 Table 5.3.2-1)"
+    confidence: secondary
+  n_prb_mu2:
+    value: 135
+    unit: PRB
+    source: "3GPP TS 38.101-1 Table 5.3.2-1 (100 MHz, 60 kHz SCS)"
+    confidence: secondary
+
+tdd:
+  pattern:
+    value: "DDDSU"
+    unit: ""
+    source: "Design baseline. Pattern semantics per TS 38.213 §11.1 (tdd-UL-DL-ConfigurationCommon). DDDSU with 2.5 ms period is the pattern commonly used by MNOs on n78; the brief §2.2 calls it the default."
+    confidence: design
+  period_ms:
+    value: 2.5
+    unit: ms
+    source: "5 slots x 0.5 ms at mu=1 (TS 38.211 §4.3.2)"
+    confidence: secondary
+  candidates:
+    value: ["DDDSU", "DDSUU", "DSUUU"]
+    unit: ""
+    source: "Brief §2.2: baseline plus two uplink-heavy alternatives. Each must be evaluated for cross-link interference against adjacent MNO n78 spectrum."
+    confidence: design
+  special_slot_symbols:
+    value: {dl: 10, gp: 2, ul: 2}
+    unit: symbols
+    source: "[UNVERIFIED] Common S-slot split (10D:2G:2U) used in commercial n78 deployments; must be confirmed from an operator/vendor reference or replaced by a documented design choice. TS 38.213 §11.1 allows nrofDownlinkSymbols/nrofUplinkSymbols to be set freely."
+    confidence: unverified
+  synchronised_with_mno:
+    value: true
+    unit: ""
+    source: "Design: assume synchronised frame timing with adjacent MNO n78 carriers is REQUIRED unless guard band / separation analysis (sinr.py cross-link module, Phase 2) shows otherwise. This is the coexistence trap headline slide."
+    confidence: design
+
+power:
+  gnb_tx_power_dbm_per_port:
+    value: 38
+    unit: dBm
+    source: "3GPP TS 38.104 Table 6.2.1-1: Medium Range BS rated output power <= 38 dBm per antenna connector (FR1). Chosen BS class = medium range (yard is < 2 km). Regulatory EIRP cap from CNAF is [UNVERIFIED] and may be lower — see spectrum.cnaf."
+    confidence: secondary
+  gnb_n_tx_ports:
+    value: 4
+    unit: ""
+    source: "Design: 4T4R small-cell/medium-range radio, typical for private-network FR1 products. Replace with the chosen product datasheet."
+    confidence: design
+  gnb_n_rx_ports:
+    value: 4
+    unit: ""
+    source: "Design (4T4R). Rx diversity/MRC gain derived in linkbudget.py as 10log10(N_rx) — an ideal upper bound (noise-limited MRC)."
+    confidence: design
+  regulatory_eirp_limit_dbm:
+    value: 43
+    unit: dBm
+    source: "[UNVERIFIED] Placeholder. Must be read from the CNAF nota UN governing 3800-3920 MHz local low/medium power networks. Do NOT report this number. The code warns whenever it is used."
+    confidence: unverified
+
+spectrum:
+  cnaf:
+    local_broadband_low_medium_power_mhz:
+      value: [3800, 3920]
+      unit: MHz
+      source: "[UNVERIFIED] From press coverage quoted in the brief §2. CONFLICT: CNMC report IPN/CNMC/007/23 (19 Apr 2023, https://www.cnmc.es/node/400238) describes the self-provision reserve in the draft CNAF as 20 MHz within 3.4-3.8 GHz plus 450 MHz at 26 GHz — not 3.8-4.2 GHz. A later CNAF revision may have changed this. Team must read the current Orden that approves the CNAF and cite the nota UN number."
+      confidence: unverified
+    local_broadband_self_provision_upper_mhz:
+      value: [4020, 4120]
+      unit: MHz
+      source: "[UNVERIFIED] Press coverage (brief §2). Same verification task as above."
+      confidence: unverified
+    mmwave_self_provision_mhz:
+      value: 450
+      unit: MHz
+      source: "CNMC IPN/CNMC/007/23 press release (19 Apr 2023): draft CNAF reserves 450 MHz in the 26 GHz band for local self-provision networks. Final Orden text and nota UN number still to be cited."
+      confidence: secondary
+    nota_un_reference:
+      value: "UN-???"
+      unit: ""
+      source: "[UNVERIFIED] To be filled in from the current CNAF (Orden ETD/xxx/20xx). The June-2023 modification (Orden ETD/625/2023) touched UN-40/41/46/92 — check whether the 3.8-4.2 GHz reorganisation is a later Orden."
+      confidence: unverified
+
+comparison_bands:
+  mno_pni_npn:
+    fc_ghz: {value: 3.6, unit: GHz, source: "Design: representative n78 MNO block (3.4-3.8 GHz, TS 38.101-1)", confidence: design}
+    bandwidth_mhz: {value: 100, unit: MHz, source: "Design: assume a full 100 MHz MNO block sliced via S-NSSAI (PNI-NPN); actual slice share is an SLA parameter [UNVERIFIED]", confidence: design}
+  mmwave_overlay:
+    fc_ghz: {value: 26.0, unit: GHz, source: "Design: n258 (24.25-27.5 GHz, TS 38.101-2 Table 5.2-1) overlay on quay only", confidence: secondary}
+    bandwidth_mhz: {value: 400, unit: MHz, source: "TS 38.101-2 Table 5.3.5-1: max channel BW 400 MHz for n258 (FR2-1)", confidence: secondary}
+    mu: {value: 3, unit: "", source: "TS 38.211 Table 4.2-1: mu=3 -> 120 kHz SCS", confidence: secondary}
+    n_prb: {value: 264, unit: PRB, source: "TS 38.101-2 Table 5.3.2-1: N_RB for 400 MHz at 120 kHz SCS = 264", confidence: secondary}
+
+ul_power_control:
+  # Open-loop fractional power control, TS 38.213 §7.1.1: P_PUSCH = min(P_CMAX, P_O + 10log10(2^mu * M_RB) + alpha * PL)
+  p0_dbm:
+    value: -80
+    unit: dBm
+    source: "Design: P_O_PUSCH (per-PRB target received power); TS 38.213 §7.1.1 defines the parameter, the value is a network design choice. -80 dBm with alpha 0.8 targets ~+10 dB SNR/PRB at 110 dB coupling loss against -113.4 dBm/PRB noise (NF 5 dB); tuned from figure 2. Sweep in the sensitivity analysis."
+    confidence: design
+  alpha:
+    value: 0.8
+    unit: ""
+    source: "Design: fractional path-loss compensation factor alpha in TS 38.213 §7.1.1 (allowed set {0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1})"
+    confidence: secondary
