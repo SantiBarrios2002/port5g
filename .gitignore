@@ -11,3 +11,6 @@ figures/*.svg
 results/*.json
 testbed/captures/*.pcap
 testbed/captures/*.log
+
+# Windows download markers (WSL)
+*:Zone.Identifier
