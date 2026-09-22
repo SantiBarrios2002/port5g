@@ -9,3 +9,6 @@
 - `fig07_offered_vs_achievable.png` — brief §7 item 7
 - `fig08_admission_timeseries.png` — brief §7 item 8
 - `fig09_sensitivity_tornado.png` — brief §7 item 9
+- `fig10_cost_breakdown.png` — brief §7 item 10
+- `fig11_cash_flow.png` — brief §7 item 11
+- `fig12_npv_tornado.png` — brief §7 item 12

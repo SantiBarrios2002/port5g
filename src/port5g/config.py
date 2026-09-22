@@ -19,7 +19,7 @@ from typing import Any, Iterator
 import yaml
 
 CONFIDENCE_LEVELS = ("verified", "secondary", "unverified", "design")
-CONFIG_FILES = ("band", "ues", "services", "qos", "scenario_best", "latency")
+CONFIG_FILES = ("band", "ues", "services", "qos", "scenario_best", "latency", "economics")
 
 
 class UnverifiedValueWarning(UserWarning):

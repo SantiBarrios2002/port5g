@@ -4,10 +4,10 @@ Engineering study for 230709 5GMCS (UPC ETSETB). Everything numeric in the repor
 repo from `config/*.yaml`** or **cited** — see `docs/assumptions.md` (generated) and `docs/BRIEF.md` §10.
 
 ```
-make install      # pip install -e ".[dev]"   (Python ≥ 3.10; PuLP optional -> ILP site placement)
-make test         # 39 tests incl. every §4 numeric anchor
+make install      # pip install -e ".[dev]"   (Python ≥ 3.10; includes PuLP -> ILP site placement)
+make test         # 45 tests incl. every §4 numeric anchor
 make run          # config -> results/results.json  (deterministic, seed in scenario_best.yaml)
-make figures      # figures 1-9 as PNG, byte-identical across runs
+make figures      # figures 1-12 as PNG, byte-identical across runs
 make assumptions  # regenerate docs/assumptions.md from the config provenance records
 make check-assumptions   # fails while any value is still [UNVERIFIED]  (use before the final report)
 python -m port5g.cli anchors          # prints the §4 anchors next to the expected values
@@ -32,11 +32,11 @@ Current count: run `make assumptions` (≈230 values, ≈50 unverified at hand-o
 
 ## Repository map
 ```
-config/            band · ues · services · qos · scenario_best · latency   (annotated YAML)
+config/            band · ues · services · qos · scenario_best · latency · economics   (annotated YAML)
 data/site/         best_terminal.geojson  — SCHEMATIC PLACEHOLDER, see scripts/DIGITISE_SITE.md
 src/port5g/        channel · linkbudget · capacity · latency · reliability · sinr · geometry · planning
-                   slicing · admission · scenario · plots · cli · config · tables
-tests/             anchors (§4), channel properties, budget/reliability, system/determinism, config provenance
+                   slicing · admission · economics · scenario · plots · cli · config · tables
+tests/             anchors (§4), channel properties, budget/reliability, system/determinism, config provenance, economics
 docs/              assumptions.md (generated) · impact_notes.md · requirements_traceability.csv · references.bib
                    architecture.md · msc/*.mmd (4 Mermaid MSCs) · BRIEF.md
 figures/           generated PNGs + MANIFEST.md
@@ -53,6 +53,7 @@ results/           results.json (every number the report may quote)
 | 4 slicing + admission | ✅ | fig 8; ARP semantics unit-tested |
 | 5 testbed | ❌ dropped | removed 2026-09-22 (never run; not required by the course). Slice/QoS design stays on paper: `qos.yaml`, `architecture.md`, MSCs. Recoverable from commit 81ae7ce |
 | 6 synthesis | ⚠️ | fig 9 tornado done; traceability CSV drafted; assumption sweep pending |
+| 7 techno-economics (report Ch. 5) | ⚠️ structure only | `economics.py`: site count → CAPEX/OPEX → NPV/payback, SNPN vs PNI-NPN, cost per TDD pattern; figs 10–12. **All 25 cost/saving inputs are [UNVERIFIED] placeholders** (figures carry a red stamp) |
 
 ## Headline results at hand-over (placeholder inputs — do not quote)
 - Coverage needs **4 sites** (ILP); uplink **capacity needs 17** (DSUUU, 1 layer) or **9** (2-layer UL MIMO). The design is
@@ -62,9 +63,14 @@ results/           results.json (every number the report may quote)
   more in reality) or PDCP duplication (2× spectral cost). See `docs/impact_notes.md`.
 - 99.9 % *area* availability costs a ~21 dB shadow margin — the single most sensitive assumption (fig 9).
 - CNAF sub-ranges in the brief conflict with the CNMC 2023 report → `[UNVERIFIED]`, headline CT4 slide.
+- The configured TDD pattern is the MNO-synchronised `DDDSU`, which needs **23** sites (2-layer UL) vs **9** for `DSUUU`.
+  `economics.tco_by_tdd_pattern` turns that into money: the TDD coexistence trade-off is also a cost trade-off.
+- In the business case the network is a small share of total cost next to the automation retrofit, and NPV is
+  driven by labour assumptions (fig 12). Structure only: every cost input is a placeholder.
 
 ## Next actions (in order)
-1. Source the [UNVERIFIED] list (`make assumptions`); start with beamforming gain, interference margin, CNAF.
+1. Source the [UNVERIFIED] list (`make assumptions`); start with beamforming gain, interference margin, CNAF,
+   then the economic inputs in `config/economics.yaml` (each source field says where to look).
 2. Digitise the terminal polygon; set `geojson_is_placeholder: false`.
 3. Implement the TDD cross-link interference analysis (`sinr.cross_link_interference_note()` is the plan).
 4. Replace the Bernoulli blockage term with TR 38.901 Blockage Model B in the ASC zone (impact note M3).

@@ -1,0 +1,180 @@
+# economics.yaml — techno-economic model (report Ch. 5): site count -> CAPEX/OPEX -> cash flow, NPV, payback.
+# Currency EUR, real terms (no inflation). Same record schema as every other config file.
+#
+# !! EVERY cost and saving below is an [UNVERIFIED] PLACEHOLDER chosen only so the pipeline runs. They are round
+# !! orders of magnitude, NOT taken from any source. Figures 10-12 carry a red stamp while any of them remains.
+# !! Each source field says where the team should look. Replace value + source + confidence together.
+#
+# The structure (what is counted, and that automation savings are netted against automation cost, not credited
+# to the network alone) is the design argument; the numbers are the team's sourcing task.
+
+model:
+  horizon_years:
+    value: 10
+    unit: years
+    source: "Design: typical depreciation life of RAN/core equipment; sweep in the report if challenged."
+    confidence: design
+  discount_rate:
+    value: 0.08
+    unit: "1/year"
+    source: "Design: corporate hurdle rate used for the NPV. Replace by a cited port-operator WACC if one is found."
+    confidence: design
+  benefit_ramp:
+    value: [0.3, 0.7, 1.0]
+    unit: "fraction of full annual benefit, years 1..3 (1.0 afterwards)"
+    source: "Design: phased roll-out (pilot crane/shuttles -> quay -> full yard). Must match the deployment-phases section of Ch. 4."
+    confidence: design
+  base_site_scenario:
+    value: capacity_2layer
+    unit: ""
+    source: "Design: the report's reference network is the capacity-driven count with 2-layer UL MIMO (coverage-driven count does not carry the UL load, see impact_notes M10)."
+    confidence: design
+  sensitivity_fraction:
+    value: 0.3
+    unit: ""
+    source: "Design: every economic input is perturbed by +/-30 % for the NPV tornado (fig. 12)."
+    confidence: design
+
+network_capex:
+  ran_per_site_eur:
+    value: 60000
+    unit: EUR/site
+    source: "[UNVERIFIED] Placeholder. gNB (RU+DU/CU share) for one 100 MHz n77 4T4R site. Source from integrator/vendor list prices or a private-network cost study (e.g. Analysys Mason, Ofcom, 5G-ACIA)."
+    confidence: unverified
+  site_works_per_site_eur:
+    value: 40000
+    unit: EUR/site
+    source: "[UNVERIFIED] Placeholder. Mounting on crane/lighting mast, fibre to the edge room, power. Source from a port/industrial installation reference."
+    confidence: unverified
+  core_eur:
+    value: 250000
+    unit: EUR
+    source: "[UNVERIFIED] Placeholder. On-site redundant 5GC (AMF/SMF/UPF/PCF/UDM/NSSF...) hardware + licences. SNPN option only. Source from a private-5GC vendor offer or case study."
+    confidence: unverified
+  mec_eur:
+    value: 150000
+    unit: EUR
+    source: "[UNVERIFIED] Placeholder. Edge servers on N6 hosting crane-control and fleet-manager apps; needed in both options (local UPF, impact_notes / latency proof)."
+    confidence: unverified
+  integration_eur:
+    value: 300000
+    unit: EUR
+    source: "[UNVERIFIED] Placeholder. Systems integration with the terminal operating system, planning, commissioning, drive test."
+    confidence: unverified
+  cpe_eur:
+    crane_cpe:
+      value: 3000
+      unit: EUR/device
+      source: "[UNVERIFIED] Placeholder. Industrial 5G router with external antennas, one per crane (design count). Use the datasheet product chosen in ues.yaml and its list price."
+      confidence: unverified
+    vehicle_cpe:
+      value: 3000
+      unit: EUR/device
+      source: "[UNVERIFIED] Placeholder. Vehicle-grade 5G router, one per shuttle carrier."
+      confidence: unverified
+    iot_module:
+      value: 150
+      unit: EUR/device
+      source: "[UNVERIFIED] Placeholder. Per reefer plug / asset tag (NB-IoT/RedCap module + integration). Source from a module distributor price."
+      confidence: unverified
+    handheld:
+      value: 800
+      unit: EUR/device
+      source: "[UNVERIFIED] Placeholder. Rugged 5G handheld with PTT."
+      confidence: unverified
+
+automation_capex:
+  crane_remote_retrofit_per_crane_eur:
+    value: 1500000
+    unit: EUR/crane
+    source: "[UNVERIFIED] Placeholder. Retrofit of an STS crane for remote operation (cameras, sensors, PLC, safety). Source from crane-vendor press releases / port case studies."
+    confidence: unverified
+  shuttle_autonomy_kit_per_vehicle_eur:
+    value: 250000
+    unit: EUR/vehicle
+    source: "[UNVERIFIED] Placeholder. Driverless kit (sensors, compute, safety certification) per shuttle carrier. Source from vendor/press."
+    confidence: unverified
+  remote_ops_centre_eur:
+    value: 2000000
+    unit: EUR
+    source: "[UNVERIFIED] Placeholder. Remote control room (operator desks, displays, redundancy)."
+    confidence: unverified
+
+network_opex:
+  maintenance_fraction_of_capex:
+    value: 0.15
+    unit: "1/year"
+    source: "[UNVERIFIED] Placeholder. Annual hardware/software support as a fraction of network CAPEX. Source from vendor support terms or a TCO study."
+    confidence: unverified
+  spectrum_fee_eur_per_year:
+    value: 20000
+    unit: EUR/year
+    source: "[UNVERIFIED] Placeholder. Spanish radio-spectrum reservation fee for the self-provision licence (SNPN option only). Compute from Ley 11/2022 General de Telecomunicaciones, Anexo I (tasa por reserva del dominio público radioeléctrico) with the band, MHz and area."
+    confidence: unverified
+  power_per_site_kw:
+    value: 1.0
+    unit: kW
+    source: "[UNVERIFIED] Placeholder. Average site power draw; take from the gNB datasheet."
+    confidence: unverified
+  electricity_eur_per_kwh:
+    value: 0.15
+    unit: EUR/kWh
+    source: "[UNVERIFIED] Placeholder. Spain non-household electricity price (Eurostat nrg_pc_205)."
+    confidence: unverified
+  network_ops_fte:
+    value: 2
+    unit: FTE
+    source: "[UNVERIFIED] Placeholder. In-house network operations staff (SNPN option; PNI-NPN assumes the MNO operates the core)."
+    confidence: unverified
+  network_ops_cost_eur_per_fte:
+    value: 60000
+    unit: EUR/FTE/year
+    source: "[UNVERIFIED] Placeholder. Loaded cost of a network engineer in Barcelona (INE labour-cost survey or salary survey)."
+    confidence: unverified
+  mno_service_fee_eur_per_year:
+    value: 300000
+    unit: EUR/year
+    source: "[UNVERIFIED] Placeholder. MNO fee for a PNI-NPN (slice + core + operations) — PNI-NPN option only. Source from a Spanish MNO private-network offer or press."
+    confidence: unverified
+
+benefits:
+  crane_operators_per_crane_manual:
+    value: 1
+    unit: "posts/crane/shift"
+    source: "Design: one cabin operator per active STS crane per shift."
+    confidence: design
+  cranes_per_remote_operator:
+    value: 2
+    unit: cranes/operator
+    source: "[UNVERIFIED] Placeholder. How many cranes one remote operator can serve (automated parts of the cycle). Source from remote-STS vendor case studies; 1 would mean no labour saving, only safety/ergonomics."
+    confidence: unverified
+  shuttle_drivers_per_vehicle_manual:
+    value: 1
+    unit: "posts/vehicle/shift"
+    source: "Design: one driver per active shuttle carrier per shift."
+    confidence: design
+  vehicles_per_remote_supervisor:
+    value: 10
+    unit: vehicles/supervisor
+    source: "[UNVERIFIED] Placeholder. Remote supervision ratio for driverless yard vehicles. Source from AV-terminal case studies."
+    confidence: unverified
+  fte_per_24x7_post:
+    value: 5
+    unit: FTE/post
+    source: "[UNVERIFIED] Placeholder. FTEs needed to staff one post 24/7 (shifts, holidays). Derive from the applicable collective agreement's annual hours."
+    confidence: unverified
+  crane_operator_cost_eur_per_fte:
+    value: 90000
+    unit: EUR/FTE/year
+    source: "[UNVERIFIED] Placeholder. Loaded cost of an STS crane operator at the Port of Barcelona (stevedoring collective agreement)."
+    confidence: unverified
+  driver_cost_eur_per_fte:
+    value: 70000
+    unit: EUR/FTE/year
+    source: "[UNVERIFIED] Placeholder. Loaded cost of a shuttle-carrier driver at the Port of Barcelona."
+    confidence: unverified
+  legacy_network_saving_eur_per_year:
+    value: 50000
+    unit: EUR/year
+    source: "[UNVERIFIED] Placeholder. Wi-Fi / proprietary telemetry maintenance avoided once S3 moves to 5G."
+    confidence: unverified

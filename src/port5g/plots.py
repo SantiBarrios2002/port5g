@@ -12,7 +12,8 @@ import numpy as np  # noqa: E402
 SAVE_KW = dict(dpi=130, bbox_inches="tight", metadata={"Software": None})
 FIG_ORDER = ["fig01_terminal_map", "fig02_ul_sinr_map", "fig03_link_budget_waterfall", "fig04_radius_vs_throughput",
              "fig05_latency_budget", "fig06_reliability_pareto", "fig07_offered_vs_achievable",
-             "fig08_admission_timeseries", "fig09_sensitivity_tornado"]
+             "fig08_admission_timeseries", "fig09_sensitivity_tornado", "fig10_cost_breakdown",
+             "fig11_cash_flow", "fig12_npv_tornado"]
 
 
 def _load(path: Path) -> dict:
@@ -161,6 +162,59 @@ def fig09_sensitivity_tornado(res, cfg, out):
     ax.set_yticks(range(len(rows))); ax.set_yticklabels([f"{r['assumption'].split('.')[-1]} [{r['low']}..{r['high']}]" for r in rows[::-1]], fontsize=7)
     ax.axvline(base, color="k"); ax.set_xlabel(f"site count (base = {base})"); ax.set_title("Fig. 9 — Sensitivity of site count to single assumptions")
     fig.savefig(out / "fig09_sensitivity_tornado.png", **SAVE_KW); plt.close(fig)
+
+
+def _unverified_cost_stamp(ax, res):
+    n = res["economics"]["n_unverified_inputs"]
+    if n:
+        ax.text(0.5, 0.5, f"{n} UNVERIFIED COST INPUTS\nillustrative only", transform=ax.transAxes, ha="center",
+                va="center", fontsize=18, color="red", alpha=0.25, rotation=20, weight="bold")
+
+
+def fig10_cost_breakdown(res, cfg, out):
+    ec = res["economics"]
+    keys = list(ec["scenarios"])
+    labels = [f"{k}\n({ec['scenarios'][k]['snpn']['n_sites']} sites)" for k in keys]
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 4.2))
+    for ax, part, title in ((a1, "network_capex", "Network CAPEX (SNPN)"), (a2, "network_opex_per_year", "Network OPEX per year (SNPN)")):
+        items = list(ec["scenarios"][keys[0]]["snpn"][part])
+        bottom = np.zeros(len(keys))
+        for it in items:
+            v = np.array([ec["scenarios"][k]["snpn"][part][it] for k in keys]) / 1e6
+            ax.bar(labels, v, bottom=bottom, label=it); bottom += v
+        ax.set_ylabel("MEUR" if part == "network_capex" else "MEUR / year"); ax.set_title(title, fontsize=10)
+        ax.legend(fontsize=7, loc="upper left"); ax.set_ylim(0, bottom.max() * 1.45); _unverified_cost_stamp(ax, res)
+    auto = sum(ec["scenarios"][keys[0]]["snpn"]["automation_capex"].values()) / 1e6
+    fig.suptitle(f"Fig. 10 — Network cost per site-count scenario (automation retrofit, not shown: {auto:.1f} MEUR)")
+    fig.savefig(out / "fig10_cost_breakdown.png", **SAVE_KW); plt.close(fig)
+
+
+def fig11_cash_flow(res, cfg, out):
+    ec = res["economics"]
+    fig, ax = plt.subplots(figsize=(8, 4.2))
+    for k, byopt in ec["scenarios"].items():
+        for opt, ls in (("snpn", "-"), ("pni_npn", "--")):
+            e = byopt[opt]; y = np.array(e["use_case_cum_discounted"]) / 1e6
+            ax.plot(np.arange(len(y)), y, ls, marker=".", label=f"{k} ({e['n_sites']} sites), {opt}")
+    ax.axhline(0, color="k", lw=0.8); ax.set_xlabel("year"); ax.set_ylabel("cumulative discounted cash flow [MEUR]")
+    ax.set_title("Fig. 11 — Use-case business case (network + automation cost vs labour savings)", fontsize=10)
+    ax.legend(fontsize=7); _unverified_cost_stamp(ax, res)
+    fig.savefig(out / "fig11_cash_flow.png", **SAVE_KW); plt.close(fig)
+
+
+def fig12_npv_tornado(res, cfg, out):
+    ec = res["economics"]; rows = ec["npv_sensitivity"][:10]
+    base = rows[0]["npv_base"] / 1e6
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    for i, r in enumerate(rows[::-1]):
+        lo, hi = r["npv_low"] / 1e6, r["npv_high"] / 1e6
+        ax.barh(i, lo - base, left=base, color="#1976d2"); ax.barh(i, hi - base, left=base, color="#f57c00")
+    f = cfg.economics.model.sensitivity_fraction
+    ax.set_yticks(range(len(rows))); ax.set_yticklabels([r["input"].split(".", 2)[-1] for r in rows[::-1]], fontsize=7)
+    ax.axvline(base, color="k"); ax.set_xlabel(f"use-case NPV [MEUR] (base = {base:.1f}; blue -{f:.0%}, orange +{f:.0%})")
+    ax.set_title(f"Fig. 12 — NPV sensitivity ({ec['base_site_scenario']}, {ec['base_n_sites']} sites, SNPN)", fontsize=10)
+    _unverified_cost_stamp(ax, res)
+    fig.savefig(out / "fig12_npv_tornado.png", **SAVE_KW); plt.close(fig)
 
 
 def make_all(results_path: Path, out_dir: Path, cfg) -> list[Path]:

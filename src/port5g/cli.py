@@ -25,6 +25,14 @@ def cmd_run(a):
         print(f"  TDD {p}: UL frac {c['ul_fraction']:.2f}, {c['ul_cell_mean_mbps']:.0f} Mbit/s/cell, {c['ul_network_mbps']:.0f} Mbit/s network "
               f"— closes: {c['closes']}; sites for capacity: {c['sites_needed_for_capacity_1layer']} (1L) / {c['sites_needed_for_capacity_2layer']} (2L UL MIMO)")
     print(f"  local UPF proof: {res['latency']['local_upf_proof']}")
+    ec = res["economics"]
+    b = ec["scenarios"][ec["base_site_scenario"]]
+    for opt, e in b.items():
+        pb = "none within horizon" if e["use_case_payback_years"] is None else f"{e['use_case_payback_years']:.1f} y"
+        print(f"  economics [{ec['base_site_scenario']}, {e['n_sites']} sites, {opt}]: network TCO {e['network_tco_discounted']/1e6:.2f} MEUR, "
+              f"use-case NPV {e['use_case_npv']/1e6:.2f} MEUR, payback {pb}")
+    if ec["n_unverified_inputs"]:
+        print(f"  !! {ec['n_unverified_inputs']} economic inputs are [UNVERIFIED] placeholders — economics not reportable")
     if res["site"]["placeholder"]:
         print("  !! site geometry is a PLACEHOLDER — figures 1/2 and site count are not reportable")
 

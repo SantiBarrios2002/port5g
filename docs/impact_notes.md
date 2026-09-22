@@ -19,6 +19,16 @@ numeric ones. Keep it short and honest — brief §9 demands at least one negati
 | M9 | Admission simulator: Poisson arrivals, exponential holding, GFBR reservation, ARP exactly per TS 23.501 §5.7.2.2; slice minimum shares are inviolable | `admission.py` | Brief §6 contract | Real gNB schedulers pre-empt at PRB level, not session level; the qualitative result (control never pre-empted, MIoT squeezed first) is robust, the numbers are not. |
 | M10 | Site placement = set cover on UL coverage radius only | `planning.py` | Phase 2 baseline | **This is the headline negative result: coverage needs 4 sites, capacity needs 17 (DSUUU, 1 layer) or 9 (2-layer UL MIMO).** The design is capacity-limited in the uplink; the report must present the capacity-driven count and the fixes (UL MIMO, mmWave on quay, video bit-rate reduction, more sites). |
 
+## Techno-economic model (`economics.py`) — structural assumptions
+
+| # | Assumption | Impact if wrong |
+|---|---|---|
+| E1 | Savings come from automation; the business case charges them against network **and** automation retrofit CAPEX. The network alone is reported as a pure cost (TCO), never as having its own ROI | Crediting labour savings to the network alone would inflate ROI by the retrofit cost, which is much larger than the network cost in the placeholder numbers |
+| E2 | Labour saving = posts removed × FTE per 24/7 post × loaded cost; remote supervision ratios (cranes/operator, vehicles/supervisor) are the key inputs | A 1:1 remote ratio gives zero crane labour saving (test-covered); the case then rests on safety/ergonomics, not cost. Workforce impact is also a SWOT threat (dock labour relations) |
+| E3 | PNI-NPN option still buys RAN, CPE and MEC on site (local UPF is mandatory, R5.2); only the core, its staff and the spectrum fee are swapped for an MNO fee | If the MNO would fund the on-site RAN, PNI-NPN looks cheaper than shown |
+| E4 | All CAPEX in year 0, flat OPEX, benefits phased by `benefit_ramp`; real terms, no tax, no residual value, no equipment refresh within the 10-year horizon | Refreshing RAN mid-horizon or phasing CAPEX with the roll-out changes NPV/payback; keep the ramp consistent with the deployment phases in Ch. 4 |
+| E5 | Site counts are taken from the capacity model, which assumes per-cell spectral efficiency from the coverage-driven layout | Densifying to 9-23 sites changes inter-cell interference, so the per-cell capacity (and site count) is approximate |
+
 ## Numeric assumptions with dominant impact (from fig. 9, the code decides)
 
 1. `services.S1_crane_control.area_availability_target` (0.99 ↔ 0.9999): 3 ↔ 6 sites. The 99.9 % target costs a ~21 dB shadow margin with σ = 7.82 dB. Whether 99.9 % *area* availability is the right reading of TS 22.104 "communication service availability" is a definitional question — raise it with the course staff.

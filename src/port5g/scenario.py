@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import admission, capacity, channel, geometry, latency, linkbudget, planning, reliability, sinr, slicing
+from . import admission, capacity, channel, economics, geometry, latency, linkbudget, planning, reliability, sinr, slicing
 from .config import Config, load_config
 
 # Service -> (zone it must be served in, target SE per layer [bit/s/Hz], BLER, PRB allocation for the budget)
@@ -156,6 +156,14 @@ def run(cfg: Config | None = None, seed: int | None = None, sinr_shadowing: bool
 
     # --- sensitivity tornado on site count -----------------------------------------------------
     res["sensitivity"] = sensitivity_site_count(cfg, zone_ch, grid, mounts, mast_h)
+
+    # --- techno-economics (report Ch. 5): site counts from above -> CAPEX/OPEX/NPV ------------------
+    bp = res["capacity"]["by_pattern"]
+    res["economics"] = economics.run(
+        cfg,
+        {"coverage": n_sites, "capacity_1layer": bp[pat]["sites_needed_for_capacity_1layer"],
+         "capacity_2layer": bp[pat]["sites_needed_for_capacity_2layer"]},
+        {p: bp[p]["sites_needed_for_capacity_2layer"] for p in cfg.band.tdd.candidates})
     return res
 
 
