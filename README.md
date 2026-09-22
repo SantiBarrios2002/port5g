@@ -37,6 +37,7 @@ data/site/         best_terminal.geojson  — SCHEMATIC PLACEHOLDER, see scripts
 src/port5g/        channel · linkbudget · capacity · latency · reliability · sinr · geometry · planning
                    slicing · admission · coexistence · economics · scenario · plots · cli · config · tables
 tests/             anchors (§4), channel properties, budget/reliability, system/determinism, config provenance, economics, coexistence
+docs/report/       report chapter drafts (Ch2-Ch3) + references, pandoc -> docx with the course template
 docs/              assumptions.md (generated) · impact_notes.md · requirements_traceability.csv · references.bib
                    architecture.md · msc/*.mmd (4 Mermaid MSCs) · BRIEF.md
 figures/           generated PNGs + MANIFEST.md
