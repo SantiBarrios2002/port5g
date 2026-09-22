@@ -2,7 +2,7 @@
 PY ?= python3
 SEED ?= 20260915
 
-.PHONY: help install test figures assumptions run check-assumptions clean testbed-up testbed-demo testbed-down lint
+.PHONY: help install test figures assumptions run check-assumptions clean lint
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -31,11 +31,3 @@ lint:
 clean:
 	rm -rf figures/*.png results/*.json .pytest_cache
 
-testbed-up:  ## Start Open5GS + UERANSIM (docker compose)
-	$(MAKE) -C testbed up
-
-testbed-demo:  ## Scripted <3 min demo: registration, slices, QoS flows, capture
-	$(MAKE) -C testbed demo
-
-testbed-down:
-	$(MAKE) -C testbed down

@@ -10,7 +10,6 @@ make run          # config -> results/results.json  (deterministic, seed in scen
 make figures      # figures 1-9 as PNG, byte-identical across runs
 make assumptions  # regenerate docs/assumptions.md from the config provenance records
 make check-assumptions   # fails while any value is still [UNVERIFIED]  (use before the final report)
-make testbed-up / testbed-demo / testbed-down   # Open5GS + UERANSIM (Docker)
 python -m port5g.cli anchors          # prints the §4 anchors next to the expected values
 python -m port5g.cli geometry-check   # area / quay / clutter density of the GeoJSON
 ```
@@ -40,7 +39,6 @@ src/port5g/        channel · linkbudget · capacity · latency · reliability �
 tests/             anchors (§4), channel properties, budget/reliability, system/determinism, config provenance
 docs/              assumptions.md (generated) · impact_notes.md · requirements_traceability.csv · references.bib
                    architecture.md · msc/*.mmd (4 Mermaid MSCs) · BRIEF.md
-testbed/           docker-compose (Open5GS 3 slices / 3 UPFs + UERANSIM), demo.sh, README (known limitations)
 figures/           generated PNGs + MANIFEST.md
 results/           results.json (every number the report may quote)
 ```
@@ -53,7 +51,7 @@ results/           results.json (every number the report may quote)
 | 2 geometry + planning | ⚠️ pipeline runs on placeholder geometry | digitise the real polygon; implement cross-link (TDD coexistence) analysis in `sinr.py`; figs 1, 2 regenerate automatically |
 | 3 capacity + latency + reliability | ✅ | figs 5, 6, 7; **negative result: UL does not close** with coverage-driven sites |
 | 4 slicing + admission | ✅ | fig 8; ARP semantics unit-tested |
-| 5 testbed | 🧪 scaffold | configs + demo script written, **not yet run** against pinned images; fig 10 manual |
+| 5 testbed | ❌ dropped | removed 2026-09-22 (never run; not required by the course). Slice/QoS design stays on paper: `qos.yaml`, `architecture.md`, MSCs. Recoverable from commit 81ae7ce |
 | 6 synthesis | ⚠️ | fig 9 tornado done; traceability CSV drafted; assumption sweep pending |
 
 ## Headline results at hand-over (placeholder inputs — do not quote)
@@ -69,5 +67,4 @@ results/           results.json (every number the report may quote)
 1. Source the [UNVERIFIED] list (`make assumptions`); start with beamforming gain, interference margin, CNAF.
 2. Digitise the terminal polygon; set `geojson_is_placeholder: false`.
 3. Implement the TDD cross-link interference analysis (`sinr.cross_link_interference_note()` is the plan).
-4. Run the testbed once, pin image tags, capture the pcap, make figure 10.
-5. Replace the Bernoulli blockage term with TR 38.901 Blockage Model B in the ASC zone (impact note M3).
+4. Replace the Bernoulli blockage term with TR 38.901 Blockage Model B in the ASC zone (impact note M3).

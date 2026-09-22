@@ -5,6 +5,13 @@
 **Deliverable weight:** 30% of final grade — "Team work on the development of a use case"
 **Language of all outputs:** English
 
+> **Scope decisions after import (these override the body of this brief)**
+> - 2026-09-22 — The graded deliverable is the report template + two talks in `docs/course_material/`
+>   (needs, requirements, design, techno-economics/regulation/SWOT). This brief was written for the agent that built
+>   the repo and is kept as history; where it conflicts with the course material, the course material wins.
+> - 2026-09-22 — **§5 testbed dropped** (never run, not required by the course; live demos are a risk). Figure 10,
+>   Phase 5 and the testbed acceptance criterion no longer apply. The slice/QoS/procedure design stays on paper.
+
 ---
 
 ## 0. How to read this brief

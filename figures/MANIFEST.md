@@ -9,4 +9,3 @@
 - `fig07_offered_vs_achievable.png` — brief §7 item 7
 - `fig08_admission_timeseries.png` — brief §7 item 8
 - `fig09_sensitivity_tornado.png` — brief §7 item 9
-- `fig10_wireshark_annotated.png` — produced manually from testbed/captures (brief §7.10)

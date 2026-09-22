@@ -4,7 +4,7 @@ terms:
   ue_app_processing_ms:
     value: 0.5
     unit: ms
-    source: "[UNVERIFIED] Application-layer packetisation on the crane CPE/PLC; measure on the testbed or cite a vendor figure."
+    source: "[UNVERIFIED] Application-layer packetisation on the crane CPE/PLC; cite a vendor figure."
     confidence: unverified
   ue_pusch_preparation_symbols:
     cap1: {value: 12, unit: symbols, source: "3GPP TS 38.214 Table 6.4-1: PUSCH preparation time N2 for mu=1, UE processing capability 1 = 12 symbols", confidence: secondary}
@@ -43,7 +43,7 @@ terms:
   upf_forwarding_ms:
     value: 0.1
     unit: ms
-    source: "[UNVERIFIED] Local UPF forwarding; measurable on the Open5GS testbed (N3->N6)."
+    source: "[UNVERIFIED] Local UPF forwarding; cite a vendor/benchmark figure for N3->N6 forwarding."
     confidence: unverified
   mec_app_processing_ms:
     value: 1.0

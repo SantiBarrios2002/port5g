@@ -1,4 +1,3 @@
 # Normalise text to LF; shell scripts and YAML must stay LF (they run inside Linux containers / CI)
 * text=auto eol=lf
 *.png binary
-*.pcap binary
