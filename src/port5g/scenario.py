@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import admission, capacity, channel, economics, geometry, latency, linkbudget, planning, reliability, sinr, slicing
+from . import admission, capacity, channel, coexistence, economics, geometry, latency, linkbudget, planning, reliability, sinr, slicing
 from .config import Config, load_config
 
 # Service -> (zone it must be served in, target SE per layer [bit/s/Hz], BLER, PRB allocation for the budget)
@@ -62,6 +62,17 @@ def link_budgets(cfg: Config, zone_ch: dict[str, channel.ZoneChannel], mount_h: 
     return out
 
 
+def _ul_cell_mbps(cfg: Config, se_map: np.ndarray, pattern: str, layers: int) -> float:
+    duty = capacity.tdd_duty_cycle(pattern, cfg.band.tdd.special_slot_symbols)
+    return capacity.cell_throughput_mbps(se_map, cfg.band.numerology.n_prb, cfg.band.numerology.mu, layers, 0.08, duty.ul_fraction)
+
+
+def _se_map(cfg: Config, grid, sites, zone_ch) -> np.ndarray:
+    ll = cfg.latency.link_level
+    smap = sinr.uplink_sinr_map(cfg, grid, sites, zone_ch, "vehicle_cpe", 20, False, None)
+    return capacity.spectral_efficiency_from_sinr(smap.sinr_ul_db, ll.attenuated_shannon_alpha, ll.max_spectral_efficiency_ul)
+
+
 def run(cfg: Config | None = None, seed: int | None = None, sinr_shadowing: bool = False) -> dict:
     cfg = cfg or load_config(warn=False)
     seed = int(cfg.scenario_best.simulation.seed if seed is None else seed)
@@ -101,7 +112,10 @@ def run(cfg: Config | None = None, seed: int | None = None, sinr_shadowing: bool
         maps[pat] = {"sinr_db": smap.sinr_ul_db, "serving": smap.serving}   # pattern does not change SINR; only capacity
     res["grid"] = {"x": grid.x, "y": grid.y, "zone": grid.zone, "res_m": grid.res_m}
     res["sinr_maps"] = maps
-    res["cross_link_note"] = sinr.cross_link_interference_note()
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        res["coexistence"] = coexistence.run(cfg)
+    res["coexistence"]["warnings"] = [str(x.message) for x in w]
 
     # --- capacity per TDD pattern & slice --------------------------------------------------------
     ll = cfg.latency.link_level
@@ -114,10 +128,10 @@ def run(cfg: Config | None = None, seed: int | None = None, sinr_shadowing: bool
                        "offered_ul_mbps_by_slice": offered_slice, "by_pattern": {}}
     for pat in cfg.band.tdd.candidates:
         duty = capacity.tdd_duty_cycle(pat, cfg.band.tdd.special_slot_symbols)
-        per_cell = capacity.cell_throughput_mbps(se_map, cfg.band.numerology.n_prb, cfg.band.numerology.mu, 1, 0.08, duty.ul_fraction)
+        per_cell = _ul_cell_mbps(cfg, se_map, pat, 1)
         total = per_cell * n_sites
         ach = {s: total * sl.share_max for s, sl in slices.items()}
-        per_cell_2l = capacity.cell_throughput_mbps(se_map, cfg.band.numerology.n_prb, cfg.band.numerology.mu, 2, 0.08, duty.ul_fraction)
+        per_cell_2l = _ul_cell_mbps(cfg, se_map, pat, 2)
         tot_off = sum(offered_slice.values())
         res["capacity"]["by_pattern"][pat] = {"ul_fraction": duty.ul_fraction, "dl_fraction": duty.dl_fraction,
                                               "ul_cell_mean_mbps": per_cell, "ul_network_mbps": total,
@@ -168,10 +182,12 @@ def run(cfg: Config | None = None, seed: int | None = None, sinr_shadowing: bool
 
 
 def sensitivity_site_count(cfg, zone_ch, grid, mounts, mast_h) -> list[dict]:
-    """±perturb one assumption at a time and re-plan; the code — not the team — says which dominates."""
+    """±perturb one assumption at a time and re-plan; the code — not the team — says which dominates.
+    Reports both the coverage-driven count and the capacity-driven count (configured TDD pattern, 2-layer UL):
+    the design is uplink-capacity-limited, so the capacity count is the one that sets the budget."""
     import copy
-    base_sites = None
     rows = []
+    vr = cfg.services.S1_crane_control.ul_video_rate_range_mbps
     knobs = [
         ("latency.link_level.interference_margin_db", 0.0, 6.0),
         ("latency.link_level.implementation_loss_db", 0.0, 4.0),
@@ -181,6 +197,7 @@ def sensitivity_site_count(cfg, zone_ch, grid, mounts, mast_h) -> list[dict]:
         ("ues.classes.vehicle_cpe.antenna_gain_dbi", 0.0, 8.0),
         ("ues.gnb.height_m_by_mount.lighting_mast", 20.0, 40.0),
         ("scenario_best.zones.asc_blocks.channel_model", "InF", "UMi_SC"),   # model-suitability question, brief §4.1
+        ("services.S1_crane_control.ul_video_rate_per_crane_mbps", vr[0], vr[1]),   # range from services.yaml
     ]
     def _set(c, path, val):
         d = c.data
@@ -192,15 +209,21 @@ def sensitivity_site_count(cfg, zone_ch, grid, mounts, mast_h) -> list[dict]:
         zc = channel.zone_channels_from_config(c)
         lb = link_budgets(c, zc, c.ues.gnb.height_m_by_mount.lighting_mast)
         rbz = {}
-        for f, r in lb.items():
+        for r in lb.values():
             rbz[r["zone"]] = min(rbz.get(r["zone"], 1e9), r["radius_ul_m"])
-        return len(planning.place_sites(grid, mounts, rbz, prefer_ilp=True).selected)
-    base_sites = _count(cfg)
+        sites = planning.place_sites(grid, mounts, rbz, prefer_ilp=True).selected
+        per_cell = _ul_cell_mbps(c, _se_map(c, grid, sites, zc), c.band.tdd.pattern, 2)
+        cap = int(np.ceil(sum(slicing.offered_load_per_slice(c).values()) / per_cell))
+        return len(sites), cap
+    base_cov, base_cap = _count(cfg)
     for path, lo, hi in knobs:
         c_lo, c_hi = copy.deepcopy(cfg), copy.deepcopy(cfg)
         _set(c_lo, path, lo); _set(c_hi, path, hi)
-        rows.append({"assumption": path, "low": lo, "high": hi, "sites_low": _count(c_lo), "sites_high": _count(c_hi), "sites_base": base_sites})
-    rows.sort(key=lambda r: -abs(r["sites_high"] - r["sites_low"]))
+        (cov_lo, cap_lo), (cov_hi, cap_hi) = _count(c_lo), _count(c_hi)
+        rows.append({"assumption": path, "low": lo, "high": hi,
+                     "sites_low": cov_lo, "sites_high": cov_hi, "sites_base": base_cov,
+                     "cap_sites_low": cap_lo, "cap_sites_high": cap_hi, "cap_sites_base": base_cap})
+    rows.sort(key=lambda r: -abs(r["cap_sites_high"] - r["cap_sites_low"]))
     return rows
 
 

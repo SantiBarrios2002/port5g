@@ -25,6 +25,13 @@ def cmd_run(a):
         print(f"  TDD {p}: UL frac {c['ul_fraction']:.2f}, {c['ul_cell_mean_mbps']:.0f} Mbit/s/cell, {c['ul_network_mbps']:.0f} Mbit/s network "
               f"— closes: {c['closes']}; sites for capacity: {c['sites_needed_for_capacity_1layer']} (1L) / {c['sites_needed_for_capacity_2layer']} (2L UL MIMO)")
     print(f"  local UPF proof: {res['latency']['local_upf_proof']}")
+    co = res["coexistence"]
+    for p, v in co["by_pattern"].items():
+        fr = v["conflict_fraction"]
+        print(f"  coexistence {p} vs MNO {co['mno_pattern']}: {fr['ours_U_mno_D'] + fr['ours_D_mno_U']:.0%} conflict symbols, "
+              f"extra isolation needed at nearest MNO site {v['extra_isolation_needed_db']:.1f} dB")
+    for w in co["warnings"]:
+        print(f"  !! {w}")
     ec = res["economics"]
     b = ec["scenarios"][ec["base_site_scenario"]]
     for opt, e in b.items():

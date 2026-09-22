@@ -13,7 +13,7 @@ SAVE_KW = dict(dpi=130, bbox_inches="tight", metadata={"Software": None})
 FIG_ORDER = ["fig01_terminal_map", "fig02_ul_sinr_map", "fig03_link_budget_waterfall", "fig04_radius_vs_throughput",
              "fig05_latency_budget", "fig06_reliability_pareto", "fig07_offered_vs_achievable",
              "fig08_admission_timeseries", "fig09_sensitivity_tornado", "fig10_cost_breakdown",
-             "fig11_cash_flow", "fig12_npv_tornado"]
+             "fig11_cash_flow", "fig12_npv_tornado", "fig13_cross_link"]
 
 
 def _load(path: Path) -> dict:
@@ -155,13 +155,59 @@ def fig08_admission_timeseries(res, cfg, out):
 
 
 def fig09_sensitivity_tornado(res, cfg, out):
-    rows = res["sensitivity"]; base = rows[0]["sites_base"] if rows else 0
-    fig, ax = plt.subplots(figsize=(8, 4))
-    for i, r in enumerate(rows[::-1]):
-        ax.barh(i, r["sites_low"] - base, color="#1976d2", left=base); ax.barh(i, r["sites_high"] - base, color="#f57c00", left=base)
-    ax.set_yticks(range(len(rows))); ax.set_yticklabels([f"{r['assumption'].split('.')[-1]} [{r['low']}..{r['high']}]" for r in rows[::-1]], fontsize=7)
-    ax.axvline(base, color="k"); ax.set_xlabel(f"site count (base = {base})"); ax.set_title("Fig. 9 — Sensitivity of site count to single assumptions")
+    rows = res["sensitivity"]
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.2), sharey=True)
+    panels = (("cap_sites", f"capacity-driven (TDD {cfg.band.tdd.pattern}, 2-layer UL) — sets the budget"),
+              ("sites", "coverage-driven"))
+    for ax, (key, title) in zip(axes, panels):
+        base = rows[0][f"{key}_base"] if rows else 0
+        for i, r in enumerate(rows[::-1]):
+            ax.barh(i, r[f"{key}_low"] - base, color="#1976d2", left=base); ax.barh(i, r[f"{key}_high"] - base, color="#f57c00", left=base)
+        ax.axvline(base, color="k"); ax.set_xlabel(f"site count (base = {base}; blue = low, orange = high)"); ax.set_title(title, fontsize=9)
+        _placeholder_stamp(ax, res)
+    axes[0].set_yticks(range(len(rows)))
+    axes[0].set_yticklabels([f"{r['assumption'].split('.')[-1]} [{r['low']}..{r['high']}]" for r in rows[::-1]], fontsize=7)
+    fig.suptitle("Fig. 9 — Sensitivity of site count to single assumptions")
     fig.savefig(out / "fig09_sensitivity_tornado.png", **SAVE_KW); plt.close(fig)
+
+
+def fig13_cross_link(res, cfg, out):
+    co = res["coexistence"]
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(13, 4.3), gridspec_kw={"width_ratios": [1, 1.3]})
+    from .coexistence import expand_symbols, fspl_db
+    special = dict(cfg.band.tdd.special_slot_symbols)
+    mno = expand_symbols(co["mno_pattern"], special)
+    colors = {"D": "#1976d2", "U": "#f57c00", "G": "#bdbdbd"}
+    pats = list(co["by_pattern"])
+    for row, pat in enumerate(pats):
+        ours = expand_symbols(pat, special)
+        for k, (x, y) in enumerate(zip(ours, mno)):
+            a1.add_patch(plt.Rectangle((k, row * 3 + 1), 1, 0.9, color=colors[x], lw=0))
+            if (x, y) in (("U", "D"), ("D", "U")):
+                a1.add_patch(plt.Rectangle((k, row * 3), 1, 0.9, color="red", lw=0))
+        fr = co["by_pattern"][pat]["conflict_fraction"]
+        a1.text(len(ours) + 1, row * 3 + 0.9, f"{pat}\nconflict {fr['ours_U_mno_D'] + fr['ours_D_mno_U']:.0%}", fontsize=8, va="center")
+    for k, y in enumerate(mno):
+        a1.add_patch(plt.Rectangle((k, len(pats) * 3 + 1), 1, 0.9, color=colors[y], lw=0))
+    a1.text(len(mno) + 1, len(pats) * 3 + 1.4, f"MNO {co['mno_pattern']}", fontsize=8, va="center")
+    a1.set_xlim(0, len(mno) + 16); a1.set_ylim(-0.5, len(pats) * 3 + 2.5); a1.set_yticks([])
+    a1.set_xlabel("symbol in 2.5 ms period (blue D, orange U, grey guard; red = cross-link conflict)")
+    a1.set_title("Symbol-level conflicts vs the adjacent MNO", fontsize=9)
+    d = np.logspace(*np.log10(cfg.band.coexistence.distance_range_m), 200)
+    fc = cfg.band.carrier.fc_ghz
+    for name, lk in co["links"].items():
+        on = name in co["ever_active_links"]
+        a2.semilogx(d, lk["i_at_0db_dbm"] - fspl_db(d, fc) - lk["noise_dbm"], ls="-" if on else ":", alpha=1 if on else 0.5,
+                    label=f"{name} (victim {lk['victim']}): {lk['required_separation_m']:,.0f} m" + ("" if on else " — no conflict symbols"))
+    a2.axhline(co["protection_i_over_n_db"], color="k", ls="--", lw=0.8, label=f"protection I/N = {co['protection_i_over_n_db']} dB")
+    a2.axvline(co["nearest_mno_site_m"], color="grey", ls=":", label=f"nearest MNO site (placeholder) {co['nearest_mno_site_m']} m")
+    a2.set_xlabel("separation [m] (free-space, worst case)"); a2.set_ylabel("I/N [dB]"); a2.legend(fontsize=7)
+    a2.set_title("Cross-link I/N vs separation (required separation in legend)", fontsize=9)
+    if co["n_unverified_inputs"]:
+        a2.text(0.5, 0.5, f"{co['n_unverified_inputs']} UNVERIFIED INPUTS", transform=a2.transAxes, ha="center", va="center",
+                fontsize=18, color="red", alpha=0.25, rotation=20, weight="bold")
+    fig.suptitle("Fig. 13 — TDD coexistence: cost of an uplink-heavy pattern next to MNO n78")
+    fig.savefig(out / "fig13_cross_link.png", **SAVE_KW); plt.close(fig)
 
 
 def _unverified_cost_stamp(ax, res):

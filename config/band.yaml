@@ -74,7 +74,7 @@ tdd:
   synchronised_with_mno:
     value: true
     unit: ""
-    source: "Design: assume synchronised frame timing with adjacent MNO n78 carriers is REQUIRED unless guard band / separation analysis (sinr.py cross-link module, Phase 2) shows otherwise. This is the coexistence trap headline slide."
+    source: "Design: assume synchronised frame timing with adjacent MNO n78 carriers is REQUIRED unless the guard band / separation analysis (coexistence.py, fig. 13) shows otherwise. This is the coexistence trap headline slide."
     confidence: design
 
 power:
@@ -144,3 +144,88 @@ ul_power_control:
     unit: ""
     source: "Design: fractional path-loss compensation factor alpha in TS 38.213 §7.1.1 (allowed set {0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1})"
     confidence: secondary
+
+coexistence:
+  # TDD cross-link interference against the adjacent MNO n78 carrier (brief §2.2), evaluated by coexistence.py.
+  # Minimum-coupling-loss (MCL) analysis, free-space path loss (worst case: LOS over the port apron and water).
+  # Our side reuses ues.gnb / power / ues.classes; only the MNO side and the RF adjacent-channel specs live here.
+  mno_pattern:
+    value: "DDDSU"
+    unit: ""
+    source: "ECC Recommendation (20)03 (frame structure for synchronised TDD in 3400-3800 MHz) — DDDSU-compatible frame; confirm the pattern actually used by Spanish MNOs. Same special-slot split as band.tdd.special_slot_symbols assumed."
+    confidence: secondary
+  frame_alignment:
+    value: "aligned"
+    unit: ""
+    source: "Design: same numerology, same 2.5 ms period, frame start aligned to the MNO (GNSS timing). Only the slot pattern differs; unaligned timing would only add conflicts."
+    confidence: design
+  mno_band_upper_edge_mhz:
+    value: 3800
+    unit: MHz
+    source: "Upper edge of n78 (3300-3800 MHz, TS 38.101-1 Table 5.2-1) and of the Spanish 3.4-3.8 GHz MNO assignments; confirm which MNO holds the top block."
+    confidence: secondary
+  protection_i_over_n_db:
+    value: -6
+    unit: dB
+    source: "Long-term I/N protection criterion commonly used in ITU-R / CEPT ECC coexistence studies (e.g. ITU-R F.758); cite the exact document used."
+    confidence: secondary
+  bs_aclr_db:
+    value: 45
+    unit: dB
+    source: "TS 38.104 §6.6.3 BS ACLR limit (FR1, first and second adjacent channel). NOTE the limit is the same for both adjacent channels, so with minimum-spec equipment a guard band buys no isolation."
+    confidence: secondary
+  bs_acs_db:
+    value: 46
+    unit: dB
+    source: "[UNVERIFIED] Equivalent BS adjacent-channel selectivity. TS 38.104 §7.4.1 specifies ACS as a test (interferer level vs wanted signal), not a dB figure; take the equivalent value from a 3GPP coexistence study (TR 38.803 / TR 38.921) or a product datasheet."
+    confidence: unverified
+  ue_aclr_db:
+    value: 30
+    unit: dB
+    source: "TS 38.101-1 §6.5.2.4 NR ACLR for UE power class 3."
+    confidence: secondary
+  ue_acs_db:
+    value: 33
+    unit: dB
+    source: "TS 38.101-1 §7.5 UE ACS for n77/n78; verify the value for 100 MHz channel bandwidth."
+    confidence: secondary
+  mno_gnb_eirp_dbm:
+    value: 72
+    unit: dBm
+    source: "[UNVERIFIED] Placeholder main-beam EIRP (100 MHz) of an MNO massive-MIMO macro. Take from the vendor datasheet of a typical 64T64R n78 AAU or from the site's authorised power."
+    confidence: unverified
+  mno_gnb_rx_antenna_gain_dbi:
+    value: 17
+    unit: dBi
+    source: "[UNVERIFIED] Placeholder MNO macro receive antenna gain toward our site."
+    confidence: unverified
+  mno_gnb_noise_figure_db:
+    value: 5
+    unit: dB
+    source: "ITU-R M.2412-0 Table 8-4 BS noise figure (same value as ues.gnb.noise_figure_db)."
+    confidence: secondary
+  mno_antenna_discrimination_db:
+    value: 0
+    unit: dB
+    source: "Design: worst case, our site inside the MNO main beam (no off-axis or down-tilt discrimination)."
+    confidence: design
+  mno_nearest_site_distance_m:
+    value: 500
+    unit: m
+    source: "[UNVERIFIED] Placeholder. Distance from the terminal to the nearest MNO n78 site; measure it on the Ministry's antenna geoportal (geoportal.minetur.gob.es, 'Información de antenas')."
+    confidence: unverified
+  mno_ue_class:
+    value: handheld
+    unit: ""
+    source: "Design: an MNO smartphone (e.g. a truck driver at the gate) is modelled with the handheld class of ues.yaml (PC3)."
+    confidence: design
+  our_ue_aggressor_class:
+    value: vehicle_cpe
+    unit: ""
+    source: "Design: the loudest mobile UL source close to public users is the shuttle-carrier CPE (PC2 + external antenna)."
+    confidence: design
+  distance_range_m:
+    value: [5, 20000]
+    unit: m
+    source: "Design: plotting range for I/N vs separation (fig. 13)."
+    confidence: design

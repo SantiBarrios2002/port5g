@@ -12,3 +12,4 @@
 - `fig10_cost_breakdown.png` — brief §7 item 10
 - `fig11_cash_flow.png` — brief §7 item 11
 - `fig12_npv_tornado.png` — brief §7 item 12
+- `fig13_cross_link.png` — brief §7 item 13

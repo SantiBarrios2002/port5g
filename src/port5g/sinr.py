@@ -85,10 +85,3 @@ def uplink_sinr_map(cfg, grid: Grid, sites: list[Mount], zone_ch: dict[str, chan
     sinr = 10 * np.log10(10 ** (rx_prb / 10) / (interf_lin[serving] + noise_lin))
     return SinrMap(grid, serving, sinr, rx_prb, pl)
 
-
-def cross_link_interference_note() -> str:
-    """Phase-2 placeholder: TDD coexistence with adjacent MNO n78 spectrum (brief §2.2). Returns the analysis
-    plan so the headline slide is not forgotten; implementation is a team task."""
-    return ("Cross-link interference (gNB->gNB, UE->UE) for unsynchronised DSUUU vs MNO DDDSU: compute the ACIR "
-            "needed from TS 38.104 §6.6 ACLR/ACS values and the MNO gNB->our gNB coupling loss over the port "
-            "geometry; report the guard band (MHz) or separation (m) required, or accept synchronisation.")

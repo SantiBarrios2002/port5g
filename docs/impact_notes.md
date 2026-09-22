@@ -19,6 +19,20 @@ numeric ones. Keep it short and honest — brief §9 demands at least one negati
 | M9 | Admission simulator: Poisson arrivals, exponential holding, GFBR reservation, ARP exactly per TS 23.501 §5.7.2.2; slice minimum shares are inviolable | `admission.py` | Brief §6 contract | Real gNB schedulers pre-empt at PRB level, not session level; the qualitative result (control never pre-empted, MIoT squeezed first) is robust, the numbers are not. |
 | M10 | Site placement = set cover on UL coverage radius only | `planning.py` | Phase 2 baseline | **This is the headline negative result: coverage needs 4 sites, capacity needs 17 (DSUUU, 1 layer) or 9 (2-layer UL MIMO).** The design is capacity-limited in the uplink; the report must present the capacity-driven count and the fixes (UL MIMO, mmWave on quay, video bit-rate reduction, more sites). |
 
+## TDD coexistence (`coexistence.py`) — structural assumptions
+
+| # | Assumption | Impact if wrong |
+|---|---|---|
+| C1 | Minimum-coupling-loss, single interferer, free-space path loss | Worst case: real clutter, antenna down-tilt and terrain reduce the required separation, possibly by tens of dB; a site-specific study (terrain + real antenna patterns) is needed before ruling unsynchronised operation in or out |
+| C2 | Frames aligned (same numerology, period, GNSS timing); only the slot pattern differs | Misaligned frames add conflicts; this is the best case for an unsynchronised pattern |
+| C3 | 3GPP minimum RF specs (BS ACLR 45 dB flat over first and second adjacent channel) → a guard band alone buys nothing | Real equipment usually beats the minimum spec and extra filtering is possible; the datasheet value then sets the achievable isolation |
+| C4 | Beamforming gain excluded on both sides | MNO massive-MIMO beams pointed at the port area would make the MNO → us link worse |
+
+**Negative result (current inputs):** an uplink-heavy pattern next to an MNO DDDSU carrier is not viable at any
+realistic separation (MNO gNB → our gNB needs ~24 km in free space). The team must either synchronise (DDDSU → 23
+sites 2-layer vs 9 for DSUUU) or show site-specific isolation. The coexistence trade-off is therefore also a cost
+trade-off (`economics.tco_by_tdd_pattern`).
+
 ## Techno-economic model (`economics.py`) — structural assumptions
 
 | # | Assumption | Impact if wrong |
